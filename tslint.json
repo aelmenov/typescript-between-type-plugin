@@ -1,0 +1,76 @@
+{
+    "tslint.options": {
+        "project": "tsconfig.json",
+        "typeCheck": true
+    },
+    "rules": {
+        "ban-types": [
+            true,
+            ["Object"],
+            ["Number"],
+            ["String"],
+            ["Boolean"]
+        ],
+        "member-access": true,
+        "no-non-null-assertion": true,
+        "no-reference": true,
+        "no-var-requires": true,
+        "prefer-for-of": true,
+        "await-promise": [ true ],
+        "ban-comma-operator": true,
+        "no-arg": true,
+        "no-conditional-assignment": true,
+        "no-construct": true,
+        "no-duplicate-super": true,
+        "no-duplicate-switch-case": true,
+        "no-duplicate-variable": true,
+        "no-eval": true,
+        "no-for-in-array": true,
+        "no-inferred-empty-object-type": false,
+        "no-misused-new": true,
+        "no-use-before-declare": true,
+        "no-var-keyword": true,
+        "no-internal-module": true,
+        "no-switch-case-fall-through": true,
+        "switch-default": true,
+        "deprecation": true,
+        "max-classes-per-file": false,
+        "no-duplicate-imports": true,
+        "prefer-readonly": true,
+        "array-type": [ true, "array" ],
+        "arrow-return-shorthand": true,
+        "class-name": true,
+        "jsdoc-format": true,
+        "comment-format": [ true, "check-space" ],
+        "indent": [ true, "spaces" ],
+        "interface-over-type-literal": false,
+        "type-literal-delimiter": true,
+        "one-line": [ true, "check-open-brace", "check-whitespace" ],
+        "quotemark": [ true, "single", "jsx-single" ],
+        "semicolon": [ true, "always", "ignore-interfaces" ],
+        "typedef-whitespace": [
+            true,
+            {
+                "call-signature": "nospace",
+                "index-signature": "nospace",
+                "parameter": "nospace",
+                "property-declaration": "nospace",
+                "variable-declaration": "nospace"
+            },
+            {
+                "call-signature": "onespace",
+                "index-signature": "onespace",
+                "parameter": "onespace",
+                "property-declaration": "onespace",
+                "variable-declaration": "onespace"
+            }
+        ],
+        "whitespace": [
+            true,
+            "check-branch",
+            "check-decl",
+            "check-module",
+            "check-type"
+        ]
+    }
+}

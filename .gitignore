@@ -1,0 +1,12 @@
+Thumbs.db
+Desktop.ini
+.DS_Store*
+ehthumbs.db
+
+*.log
+node_modules
+yarn*
+.idea
+docs
+dist
+coverage

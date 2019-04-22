@@ -1,0 +1,46 @@
+{
+  "name": "ts-extend-number-type",
+  "version": "1.0.0",
+  "description": "This plugin extends standart JavaScript number type with custom smallest types like byte, short, int and etc.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexelmenov/ts-extend-number-type.git"
+  },
+  "keywords": [
+    "typescript",
+    "ts",
+    "byte",
+    "short",
+    "int",
+    "long",
+    "ubyte",
+    "ushort",
+    "uint",
+    "ulong",
+    "float",
+    "double",
+    "int8",
+    "int16",
+    "int32",
+    "int64",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
+    "float32",
+    "float64"
+  ],
+  "author": "Alex Elmenov",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alexelmenov/ts-extend-number-type/issues"
+  },
+  "homepage": "https://github.com/alexelmenov/ts-extend-number-type#readme",
+  "devDependencies": {
+    "@types/node": "^11.13.6"
+  }
+}
