@@ -1,7 +1,7 @@
 const ROOT_DIR = __dirname;
 const SRC_DIR = `${ROOT_DIR}/src`;
 
-const config = {
+module.exports = {
     mode: "production",
     name: "common",
     context: ROOT_DIR,
@@ -31,5 +31,3 @@ const config = {
         fs: "empty"
     }
 };
-
-export default config;
