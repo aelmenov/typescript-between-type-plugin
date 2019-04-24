@@ -1,3 +1,3 @@
-# TypeScript Extends Number Type
+# TypeScript Between Type Plugin
 
 *Would to be write later.*

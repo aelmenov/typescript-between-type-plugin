@@ -1,34 +1,40 @@
 {
-  "name": "typescript-nrange-type-plugin",
+  "name": "typescript-between-type-plugin",
   "version": "0.0.1",
-  "description": "Add supports of the new type named 'nrange' into the TypeScript. This type allows to set ranges of the numbers for numeric variables.",
-  "main": "lib/index.js",
-  "declaration": "lib.d.ts",
+  "description": "Add supports of the new type named 'between' into the TypeScript. This type allows to set ranges of the numbers for numeric variables.",
+  "main": "index.js",
+  "declaration": "lib.between.d.ts",
   "scripts": {
-    "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile": "cross-env NODE_ENV=production webpack --color",
+    "lint": "./node_modules/.bin/tslint -c tslint.json -p tsconfig.json"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alexelmenov/ts-extend-number-type.git"
+    "url": "git+https://github.com/alexelmenov/typescript-between-type-plugin.git"
   },
   "keywords": [
     "typescript",
     "ts",
     "typescript-plugin",
     "ts-plugin",
-    "nrange",
+    "between",
     "type"
   ],
   "author": "Alex Elmenov",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/alexelmenov/ts-extend-number-type/issues"
+    "url": "https://github.com/alexelmenov/typescript-between-type-plugin/issues"
   },
-  "homepage": "https://github.com/alexelmenov/ts-extend-number-type#readme",
+  "homepage": "https://github.com/alexelmenov/typescript-between-type-plugin#readme",
   "devDependencies": {
+    "@babel/core": "^7.4.3",
+    "@babel/plugin-transform-runtime": "^7.4.3",
+    "@babel/preset-typescript": "^7.3.3",
     "@types/node": "^11.13.7",
-    "typescript": "^3.4.5"
-  },
-  "dependencies": {}
+    "babel-loader": "^8.0.5",
+    "cross-env": "^5.2.0",
+    "tslint": "^5.16.0",
+    "typescript": "^3.4.5",
+    "webpack": "^4.30.0"
+  }
 }
