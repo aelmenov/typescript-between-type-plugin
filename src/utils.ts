@@ -1,3 +1,5 @@
+import * as ts from 'typescript/lib/tsserverlibrary';
+
 export function getHash(source: string) {
     let hash = 0;
 
@@ -9,4 +11,10 @@ export function getHash(source: string) {
     }
 
     return hash;
+}
+
+export function isValidTypeScriptVersion(typescript: typeof ts) {
+    const [ major ] = typescript.version.split('.');
+
+    return +major >= 3;
 }
