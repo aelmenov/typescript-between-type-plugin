@@ -1,8 +1,11 @@
 {
     "compileOnSave": false,
     "compilerOptions": {
+        "rootDir": "src",
+        "outDir": "lib",
+        "outFile": "index.js",
         "target": "esnext",
-        "module": "es2015",
+        "module": "commonjs",
         "moduleResolution": "node",
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,

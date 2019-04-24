@@ -1,8 +1,9 @@
 {
-  "name": "ts-extend-number-type",
-  "version": "1.0.0",
-  "description": "This plugin extends standart JavaScript number type with custom smallest types like byte, short, int and etc.",
-  "main": "index.js",
+  "name": "typescript-nrange-type-plugin",
+  "version": "0.0.1",
+  "description": "Add supports of the new type named 'nrange' into the TypeScript. This type allows to set ranges of the numbers for numeric variables.",
+  "main": "lib/index.js",
+  "declaration": "lib/nrange.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,26 +14,10 @@
   "keywords": [
     "typescript",
     "ts",
-    "byte",
-    "short",
-    "int",
-    "long",
-    "ubyte",
-    "ushort",
-    "uint",
-    "ulong",
-    "float",
-    "double",
-    "int8",
-    "int16",
-    "int32",
-    "int64",
-    "uint8",
-    "uint16",
-    "uint32",
-    "uint64",
-    "float32",
-    "float64"
+    "typescript-plugin",
+    "ts-plugin",
+    "nrange",
+    "type"
   ],
   "author": "Alex Elmenov",
   "license": "MIT",
@@ -41,6 +26,6 @@
   },
   "homepage": "https://github.com/alexelmenov/ts-extend-number-type#readme",
   "devDependencies": {
-    "@types/node": "^11.13.6"
+    "typescript": "^3.4.5"
   }
 }
