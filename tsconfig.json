@@ -3,7 +3,6 @@
     "compilerOptions": {
         "rootDir": "src",
         "outDir": "lib",
-        "outFile": "index.js",
         "target": "esnext",
         "module": "commonjs",
         "moduleResolution": "node",
@@ -16,8 +15,9 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "strictNullChecks": true,
-        "strictFunctionTypes": true
+        "strictFunctionTypes": true,
+        "lib": [ "esnext" ]
     },
-    "include": [ "./src/**/*" ],
+    "include": [ "./src/**/*", "lib.d.ts" ],
     "exclude": [ "./node_modules" ]
 }

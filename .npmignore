@@ -4,3 +4,6 @@ LICENSE
 README.md
 tslint.json
 tests
+src
+yarn.lock
+node_modules

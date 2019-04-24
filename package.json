@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Add supports of the new type named 'nrange' into the TypeScript. This type allows to set ranges of the numbers for numeric variables.",
   "main": "lib/index.js",
-  "declaration": "lib/nrange.d.ts",
+  "declaration": "lib.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
