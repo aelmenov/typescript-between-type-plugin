@@ -7,11 +7,7 @@ ehthumbs.db
 .vscode
 node_modules
 src
-.babelrc
 .editorconfig
 .gitignore
-tsconfig.json
 tslint.json
-webpack.config.json
 yarn*
-

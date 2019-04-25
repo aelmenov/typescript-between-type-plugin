@@ -4,5 +4,5 @@ Desktop.ini
 ehthumbs.db
 *.log
 .idea
+lib
 node_modules
-index.js
