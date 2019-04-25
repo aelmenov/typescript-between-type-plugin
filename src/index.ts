@@ -113,6 +113,8 @@ function nodeVisitor(
 ) {
   if (isVariableDeclaration(node)) {
     variableDeclarationVisitor(sourceFile, node, reportList);
+  } else if (isExpressionStatement(node)) {
+    expressionStatementVisitor(sourceFile, node, reportList);
   }
 }
 
@@ -127,7 +129,7 @@ function variableDeclarationVisitor(
     const types = typeNode.getText();
     const initializer = node.initializer;
 
-    if (types && initializer) {
+    if (types && hasBetweenType(types) && initializer) {
       const value = +initializer.getText();
 
       compareValueWithRangeAndThrow(
@@ -135,6 +137,22 @@ function variableDeclarationVisitor(
         value, sourceFile,
         node, reportList
       );
+    }
+  }
+}
+
+function expressionStatementVisitor(
+  sourceFile: ts.SourceFile,
+  node: ts.ExpressionStatement,
+  reportList: ts.Diagnostic[]
+) {
+  const expression = node.expression;
+
+  if (isBinaryExpression(expression)) {
+    const operator = expression.operatorToken;
+
+    if (isFirstAssignment(expression.operatorToken.kind)) {
+      /// node.left --- name is link
     }
   }
 }
@@ -231,6 +249,18 @@ function isValidTypeScriptVersion(typescript: typeof ts) {
 
 function isVariableDeclaration(node: ts.Node): node is ts.VariableDeclaration {
   return node.kind === ts.SyntaxKind.VariableDeclaration;
+}
+
+function isExpressionStatement(node: ts.Node): node is ts.ExpressionStatement {
+  return node.kind === ts.SyntaxKind.ExpressionStatement;
+}
+
+function isBinaryExpression(node: ts.Node): node is ts.BinaryExpression {
+  return node.kind === ts.SyntaxKind.BinaryExpression;
+}
+
+function isFirstAssignment(kind: ts.SyntaxKind): kind is ts.SyntaxKind.FirstAssignment {
+  return kind === ts.SyntaxKind.FirstAssignment;
 }
 
 function hasBetweenType(str: string) {
