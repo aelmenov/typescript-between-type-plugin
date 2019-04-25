@@ -2,10 +2,11 @@
   "name": "typescript-between-type-plugin",
   "version": "0.0.1",
   "description": "Add supports of the new type named 'between' into the TypeScript. This type allows to set ranges of the numbers for numeric variables.",
-  "main": "index.js",
+  "main": "lib/index.js",
   "declaration": "lib.between.d.ts",
   "scripts": {
     "compile": "cross-env NODE_ENV=production webpack --color",
+    "compile1": "./node_modules/.bin/tsc",
     "lint": "./node_modules/.bin/tslint -c tslint.json -p tsconfig.json"
   },
   "repository": {

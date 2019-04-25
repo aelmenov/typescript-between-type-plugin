@@ -2,7 +2,6 @@ import * as ts from 'typescript/lib/tsserverlibrary';
 
 import { PLUGIN_NAME, reports, OUT_OF_RANGE_CODE } from './config';
 import { LanguageServiceLogger } from './LanguageServiceLogger';
-import { NRange } from './NRange';
 
 export class NRangeLanguageService {
     private readonly logger: LanguageServiceLogger;
@@ -26,12 +25,6 @@ export class NRangeLanguageService {
 
         this.visitAllNodes(sourceFile, node => {
             if (this.isVariableDeclaration(node)) {
-                const nrange = new NRange(node.type as ts.TypeNode);
-                const [ min, max ] = nrange.getRange();
-
-                if (min > -10 || -10 > max) {
-                    errors.push(this.reportError(OUT_OF_RANGE_CODE, node, sourceFile));
-                }
             }
         });
 

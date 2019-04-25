@@ -2,25 +2,28 @@ const ROOT_DIR = __dirname;
 const SRC_DIR = `${ROOT_DIR}/src`;
 
 module.exports = {
-    mode: "production",
-    name: "common",
+    mode: 'production',
+    name: 'common',
     context: ROOT_DIR,
     entry: `${SRC_DIR}/index.ts`,
     output: {
         path: ROOT_DIR,
-        filename: "index.js",
+        filename: 'index.js',
         pathinfo: false,
-        globalObject: "this"
+        globalObject: 'this'
     },
     resolve: {
-        extensions: [ ".ts" ]
+        extensions: [ '.ts', '.js' ]
     },
     module: {
         rules: [
             {
                 test: /\.ts$/,
-                loader: "babel-loader",
-                exclude: [ "./node_modules" ]
+                loader: 'babel-loader',
+                exclude: [
+                    `${ROOT_DIR}/node_modules`,
+                    `${ROOT_DIR}/node_modules/typescript/lib/tsserverlibrary`
+                ]
             }
         ]
     },
@@ -28,6 +31,6 @@ module.exports = {
         hints: false
     },
     node: {
-        fs: "empty"
+        fs: 'empty'
     }
 };

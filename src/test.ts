@@ -10,7 +10,7 @@ type Reports = {
     }
 }
 
-const PLUGIN_NAME = 'typescript-between-type-plugin';
+const PLUGIN_NAME = 'typescript-nrange-type-plugin';
 
 const OUT_OF_RANGE_CODE = 0xf101;
 
@@ -20,10 +20,10 @@ const reports: Reports = {
     }
 }
 
-const REXEX = /^between\<[\-]?([\d]+|Infinity){1}\,[\s]*[\-]?([\d]+|Infinity){1}\>$/;
+const REXEX = /^nrange\<[\-]?([\d]+|Infinity){1}\,[\s]*[\-]?([\d]+|Infinity){1}\>$/;
 const NUMBER_REXEX = /[\-]?([\d]+|Infinity){1}/g;
 
-module.exports = function(module: TSModule) {
+export function plugin(module: TSModule) {
     const ts = module.typescript;
 
     return {
@@ -54,25 +54,15 @@ module.exports = function(module: TSModule) {
                                         if (typeof value === 'number') {
                                             if (min > value || value > max) {
                                                 const [ start, length ] = getProblemSpan(node);
-                                                const span = nextLanguageService.getNameOrDottedNameSpan(fileName, types.getStart(), types.getEnd());
 
-                                                nextLanguageService.getSemanticClassifications = (fileName: string, span: ts.TextSpan) => {
-                                                    return [{
-                                                        textSpan: span,
-                                                        classificationType: ts.ClassificationTypeNames.comment
-                                                    }] as ts.ClassifiedSpan[];
-                                                };
-
-                                                if (span) {
-                                                    errors.push({
-                                                        file: sourceFile,
-                                                        start, length,
-                                                        messageText: `${span.start}, ${span.length}`,
-                                                        category: ts.DiagnosticCategory.Message,
-                                                        source: PLUGIN_NAME,
-                                                        code: 1
-                                                    });
-                                                }
+                                                errors.push({
+                                                    file: sourceFile,
+                                                    start, length,
+                                                    messageText: initializer.getText(),
+                                                    category: ts.DiagnosticCategory.Message,
+                                                    source: PLUGIN_NAME,
+                                                    code: 1
+                                                });
                                             }
                                         }
                                     }

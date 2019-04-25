@@ -4,6 +4,10 @@
         "target": "esnext",
         "module": "commonjs",
         "moduleResolution": "node",
+        "rootDir": "src",
+        "outDir": "lib",
+        "removeComments": true,
+
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "downlevelIteration": true,
