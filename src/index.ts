@@ -20,8 +20,9 @@ const INVALID_TYPESCRIPT_VERSION = 0xf000;
 const LESS_THAN_RANGE_CODE = 0xf101;
 const GREATER_THAN_RANGE_CODE = 0xf102;
 
-const BETWEEN_TYPE_REXEX = /^between\<[\-]?([\d]+|Infinity){1}\,[\s]*[\-]?([\d]+|Infinity){1}\>$/;
-const BETWEEN_VALUE_REXEX = /[\-]?([\d]+|Infinity){1}/g;
+const BETWEEN_TYPE_IN_STRING_REGEX = /between\<[\-]?([\d]+|Infinity){1}\,[\s]*[\-]?([\d]+|Infinity){1}\>/g;
+const BETWEEN_TYPE_REGEX = /^between\<[\-]?([\d]+|Infinity){1}\,[\s]*[\-]?([\d]+|Infinity){1}\>$/;
+const BETWEEN_VALUE_REGEX = /[\-]?([\d]+|Infinity){1}/g;
 
 const reports: Reports = {
   log: {
@@ -41,7 +42,10 @@ const reports: Reports = {
   }
 };
 
-function createBetweenPlugin(info: ts.server.PluginCreateInfo, module: TypeScriptModule) {
+function createBetweenPlugin(
+  info: ts.server.PluginCreateInfo,
+  module: TypeScriptModule
+) {
   if (isValidTypeScriptVersion(module.typescript)) {
     log(info, reports.log[INVALID_TYPESCRIPT_VERSION]);
   }
@@ -102,44 +106,67 @@ function visitAllNodes(
   node.forEachChild(child => visitAllNodes(child, visitor));
 }
 
-function nodeVisitor(sourceFile: ts.SourceFile, node: ts.Node, reportList: ts.Diagnostic[]) {
+function nodeVisitor(
+  sourceFile: ts.SourceFile,
+  node: ts.Node,
+  reportList: ts.Diagnostic[]
+) {
   if (isVariableDeclaration(node)) {
     variableDeclarationVisitor(sourceFile, node, reportList);
   }
 }
 
-function variableDeclarationVisitor(sourceFile: ts.SourceFile, node: ts.VariableDeclaration, reportList: ts.Diagnostic[]) {
-  const types = node.type;
+function variableDeclarationVisitor(
+  sourceFile: ts.SourceFile,
+  node: ts.VariableDeclaration,
+  reportList: ts.Diagnostic[]
+) {
+  const typeNode = node.type;
 
-  if (types && hasBetweenType(types.getText())) {
-    const [ min, max ] = getRange(types);
+  if (typeNode) {
+    const types = typeNode.getText();
     const initializer = node.initializer;
 
-    if (initializer) {
+    if (types && initializer) {
       const value = +initializer.getText();
 
-      if (typeof value === 'number') {
-        const name = node.name.getText();
-        const span = getProblemSpan(node);
+      compareValueWithRangeAndThrow(
+        getRange(types),
+        value, sourceFile,
+        node, reportList
+      );
+    }
+  }
+}
 
-        if (min > value) {
-          reportList.push(
-            reportError(
-              LESS_THAN_RANGE_CODE,
-              reports.errors[LESS_THAN_RANGE_CODE](name)(value)(min),
-              span, sourceFile
-            )
-          );
-        } else if (value > max) {
-          reportList.push(
-            reportError(
-              GREATER_THAN_RANGE_CODE,
-              reports.errors[GREATER_THAN_RANGE_CODE](name)(value)(min),
-              span, sourceFile
-            )
-          );
-        }
-      }
+function compareValueWithRangeAndThrow(
+  range: Range,
+  value: number,
+  sourceFile: ts.SourceFile,
+  node: ts.VariableDeclaration,
+  reportList: ts.Diagnostic[]
+) {
+  if (typeof value === 'number') {
+    const [ min, max ] = range;
+    const name = node.name.getText();
+    const span = getProblemSpan(node);
+
+    if (min > value) {
+      reportList.push(
+        reportError(
+          LESS_THAN_RANGE_CODE,
+          reports.errors[LESS_THAN_RANGE_CODE](name)(value)(min),
+          span, sourceFile
+        )
+      );
+    } else if (value > max) {
+      reportList.push(
+        reportError(
+          GREATER_THAN_RANGE_CODE,
+          reports.errors[GREATER_THAN_RANGE_CODE](name)(value)(max),
+          span, sourceFile
+        )
+      );
     }
   }
 }
@@ -148,15 +175,13 @@ function getProblemSpan(node: ts.VariableDeclaration): ts.TextSpan {
   return ts.createTextSpan(node.name.getStart(), node.name.getEnd() - node.getStart());
 }
 
-function getRange(type: ts.TypeNode): Range {
+function getRange(type: string): Range {
   let min = 0;
   let max = 0;
 
-  const types = type.getText().trim().split('|');
-
-  types.forEach(type => {
-    if (hasBetweenType(type)) {
-      const parsedRange = type.match(BETWEEN_VALUE_REXEX);
+  type.split('|').map(x => x.trim()).forEach(type => {
+    if (isBetweenType(type)) {
+      const parsedRange = type.match(BETWEEN_VALUE_REGEX);
 
       if (parsedRange && parsedRange.length === 2) {
         let [ start, end ] = parsedRange.map(x => +x);
@@ -209,7 +234,11 @@ function isVariableDeclaration(node: ts.Node): node is ts.VariableDeclaration {
 }
 
 function hasBetweenType(str: string) {
-  return BETWEEN_TYPE_REXEX.test(str);
+  return BETWEEN_TYPE_IN_STRING_REGEX.test(str);
+}
+
+function isBetweenType(str: string) {
+  return BETWEEN_TYPE_REGEX.test(str);
 }
 
 module.exports = function(module: TypeScriptModule) {
