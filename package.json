@@ -5,7 +5,8 @@
   "main": "lib/index.js",
   "declaration": "lib.between.d.ts",
   "scripts": {
-    "compile1": "./node_modules/.bin/tsc",
+    "compile": "./node_modules/.bin/tsc",
+    "compile:watch": "./node_modules/.bin/tsc --watch",
     "lint": "./node_modules/.bin/tslint -c tslint.json -p tsconfig.json"
   },
   "repository": {
