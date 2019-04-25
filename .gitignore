@@ -3,8 +3,7 @@ Desktop.ini
 .DS_Store*
 ehthumbs.db
 *.log
-node_modules
 .idea
-docs
-dist
-coverage
+lib
+node_modules
+package-lock.json
