@@ -53,9 +53,13 @@ function createBetweenPlugin(
   return createBetweenLanguageService(info);
 }
 
+let service: ts.LanguageService;
+
 function createBetweenLanguageService(info: ts.server.PluginCreateInfo) {
   const currentLanguageService = getCurrentLanguageService(info);
   const nextLanguageService = getNextLanguageService(info);
+
+  service = currentLanguageService;
 
   nextLanguageService.getSemanticDiagnostics = (fileName: string) =>
     getNextSemanticDiagnostics(fileName, currentLanguageService);
@@ -149,11 +153,26 @@ function expressionStatementVisitor(
   const expression = node.expression;
 
   if (isBinaryExpression(expression)) {
-    const operator = expression.operatorToken;
+    const definitions = service.getDefinitionAtPosition(sourceFile.fileName, node.getStart());
 
-    if (isFirstAssignment(expression.operatorToken.kind)) {
-      /// node.left --- name is link
+    if (definitions) {
+      reportList.push(
+        {
+          file: sourceFile,
+          start: node.getStart(),
+          length: 10,
+          code: 100,
+          messageText: JSON.stringify(definitions),
+          category: ts.DiagnosticCategory.Error,
+          source: PLUGIN_NAME
+        }
+      );
     }
+    // const operator = expression.operatorToken;
+
+    // if (isFirstAssignment(expression.operatorToken.kind)) {
+    //   /// node.left --- name is link
+    // }
   }
 }
 
