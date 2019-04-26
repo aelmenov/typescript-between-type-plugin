@@ -1,132 +1,94 @@
 import * as ts from 'typescript/lib/tsserverlibrary';
 
-type TypeScriptModule = {
-  typescript: typeof ts;
-};
+import {
+  BETWEEN_TYPE_IN_STRING_REGEX,
+  BETWEEN_TYPE_REGEX,
+  BETWEEN_VALUE_REGEX,
+  GREATER_THAN_RANGE_CODE,
+  INVALID_TYPESCRIPT_VERSION,
+  LESS_THAN_RANGE_CODE,
+  PLUGIN_NAME,
+} from './constants';
+import { reports } from './messages';
+import { BetweenNode, Project, Range, Report, ReportList, TypeScriptModule, Visitor } from './types';
+import { getHash, log } from './utils';
 
-type Range = [ number, number ];
+let project: Project;
 
-type Reports = {
-  [category: string]: {
-    [code: number]: any;
-  };
-};
-
-type Visitor = (node: ts.Node) => void;
-
-const PLUGIN_NAME = 'typescript-between-type-plugin';
-
-const INVALID_TYPESCRIPT_VERSION = 0xf000;
-const LESS_THAN_RANGE_CODE = 0xf101;
-const GREATER_THAN_RANGE_CODE = 0xf102;
-
-const BETWEEN_TYPE_IN_STRING_REGEX = /between\<[\-]?([\d]+|Infinity){1}\,[\s]*[\-]?([\d]+|Infinity){1}\>/g;
-const BETWEEN_TYPE_REGEX = /^between\<[\-]?([\d]+|Infinity){1}\,[\s]*[\-]?([\d]+|Infinity){1}\>$/;
-const BETWEEN_VALUE_REGEX = /[\-]?([\d]+|Infinity){1}/g;
-
-const reports: Reports = {
-  log: {
-    [INVALID_TYPESCRIPT_VERSION]: `Invalid TypeScript version detected. TypeScript 3.x required.`,
-  },
-
-  errors: {
-    [LESS_THAN_RANGE_CODE]: (name: TemplateStringsArray | string) =>
-      (value: TemplateStringsArray | string) =>
-        (minValue: TemplateStringsArray | string) =>
-          `Value of the "${name}" variable is less than minimal value of the specified range.\nYou specifiy "${value}" but minimal value is "${minValue}".`,
-
-    [GREATER_THAN_RANGE_CODE]: (name: TemplateStringsArray | string) =>
-      (value: TemplateStringsArray | string) =>
-        (maxValue: TemplateStringsArray | string) =>
-          `Value of the "${name}" variable is greater than maximal value of the specified range.\nYou specified "${value}" but maximal value is "${maxValue}".`,
-  }
-};
-
-function createBetweenPlugin(
-  info: ts.server.PluginCreateInfo,
-  module: TypeScriptModule
-) {
+function createBetweenPlugin(info: ts.server.PluginCreateInfo, module: TypeScriptModule) {
   if (isValidTypeScriptVersion(module.typescript)) {
     log(info, reports.log[INVALID_TYPESCRIPT_VERSION]);
   }
 
+  project = {
+    languageService: getCurrentLanguageService(info),
+    rangeNodes: { }
+  };
+
   return createBetweenLanguageService(info);
 }
 
-let service: ts.LanguageService;
-
 function createBetweenLanguageService(info: ts.server.PluginCreateInfo) {
-  const currentLanguageService = getCurrentLanguageService(info);
-  const nextLanguageService = getNextLanguageService(info);
+  const nextLanguageService = createNextLanguageService(info);
 
-  service = currentLanguageService;
-
-  nextLanguageService.getSemanticDiagnostics = (fileName: string) =>
-    getNextSemanticDiagnostics(fileName, currentLanguageService);
+  nextLanguageService.getSemanticDiagnostics = createNextSemanticDiagnostics;
 
   return nextLanguageService;
+}
+
+function createNextLanguageService(info: ts.server.PluginCreateInfo) {
+  return { ...info.languageService };
 }
 
 function getCurrentLanguageService(info: ts.server.PluginCreateInfo) {
   return info.languageService;
 }
 
-function getNextLanguageService(info: ts.server.PluginCreateInfo) {
-  return { ...info.languageService };
-}
+function createNextSemanticDiagnostics(fileName: string) {
+  const previous = getCurrentSemanticDiagnostics(fileName) || [];
 
-function getCurrentSemanticDiagnostics(
-  fileName: string,
-  languageService: ts.LanguageService
-) {
-  return languageService.getSemanticDiagnostics(fileName);
-}
+  project.rangeNodes = { };
 
-function getNextSemanticDiagnostics(
-  fileName: string,
-  currentLanguageService: ts.LanguageService
-) {
-  const program = currentLanguageService.getProgram();
-  const previous = getCurrentSemanticDiagnostics(fileName, currentLanguageService) || [];
-  const reportList: ts.Diagnostic[] = [];
+  project.program = project.languageService.getProgram();
 
-  if (program) {
-    const sourceFile = program.getSourceFile(fileName);
+  if (project.program) {
+    project.sourceFile = project.program.getSourceFile(fileName);
 
-    if (sourceFile) {
-      visitAllNodes(sourceFile, node => nodeVisitor(sourceFile, node, reportList));
+    if (project.sourceFile) {
+      visitAllNodes(project.sourceFile, node => nodeVisitor(node));
     }
   }
 
-  return [ ...previous, ...reportList ];
+  return [ ...previous, ...createRangeDiagnostics() ];
 }
 
-function visitAllNodes(
-  node: ts.Node,
-  visitor: Visitor
-) {
+function getCurrentSemanticDiagnostics(fileName: string) {
+  return project.languageService.getSemanticDiagnostics(fileName);
+}
+
+function visitAllNodes(node: ts.Node, visitor: Visitor) {
   visitor(node);
 
   node.forEachChild(child => visitAllNodes(child, visitor));
 }
 
-function nodeVisitor(
-  sourceFile: ts.SourceFile,
-  node: ts.Node,
-  reportList: ts.Diagnostic[]
-) {
-  if (isVariableDeclaration(node)) {
-    variableDeclarationVisitor(sourceFile, node, reportList);
-  } else if (isExpressionStatement(node)) {
-    expressionStatementVisitor(sourceFile, node, reportList);
+function nodeVisitor(node: ts.Node) {
+  if (isVariableStatement(node)) {
+    variableStatementVisitor(node);
+  } else if (isVariableDeclaration(node)) {
+    variableDeclarationVisitor(node);
   }
 }
 
-function variableDeclarationVisitor(
-  sourceFile: ts.SourceFile,
-  node: ts.VariableDeclaration,
-  reportList: ts.Diagnostic[]
-) {
+function variableStatementVisitor(node: ts.VariableStatement) {
+  node.declarationList.forEachChild(node => {
+    if (isVariableDeclaration(node)) {
+      variableDeclarationVisitor(node);
+    }
+  });
+}
+
+function variableDeclarationVisitor(node: ts.VariableDeclaration) {
   const typeNode = node.type;
 
   if (typeNode) {
@@ -135,84 +97,42 @@ function variableDeclarationVisitor(
 
     if (types && hasBetweenType(types) && initializer) {
       const value = +initializer.getText();
+      const name = node.name.getText();
+      const nameSpan = createSpan(node.name.getStart(), node.name.getEnd());
+      const id = createRangeId(name, nameSpan.start, nameSpan.length);
+      const ranges = createRangeFromTypeString(types);
+      const rangeNode = createRangeNode(name, value, nameSpan, node, ranges);
 
-      compareValueWithRangeAndThrow(
-        getRange(types),
-        value, sourceFile,
-        node, reportList
-      );
+      rangeNode.reports = createReportList(rangeNode);
+
+      project.rangeNodes[id] = rangeNode;
     }
   }
 }
 
-function expressionStatementVisitor(
-  sourceFile: ts.SourceFile,
-  node: ts.ExpressionStatement,
-  reportList: ts.Diagnostic[]
-) {
-  const expression = node.expression;
-
-  if (isBinaryExpression(expression)) {
-    const definitions = service.getDefinitionAtPosition(sourceFile.fileName, node.getStart());
-
-    if (definitions) {
-      reportList.push(
-        {
-          file: sourceFile,
-          start: node.getStart(),
-          length: 10,
-          code: 100,
-          messageText: JSON.stringify(definitions),
-          category: ts.DiagnosticCategory.Error,
-          source: PLUGIN_NAME
-        }
-      );
-    }
-    // const operator = expression.operatorToken;
-
-    // if (isFirstAssignment(expression.operatorToken.kind)) {
-    //   /// node.left --- name is link
-    // }
-  }
+function isBetweenType(str: string) {
+  return BETWEEN_TYPE_REGEX.test(str);
 }
 
-function compareValueWithRangeAndThrow(
-  range: Range,
-  value: number,
-  sourceFile: ts.SourceFile,
-  node: ts.VariableDeclaration,
-  reportList: ts.Diagnostic[]
-) {
-  if (typeof value === 'number') {
-    const [ min, max ] = range;
-    const name = node.name.getText();
-    const span = getProblemSpan(node);
-
-    if (min > value) {
-      reportList.push(
-        reportError(
-          LESS_THAN_RANGE_CODE,
-          reports.errors[LESS_THAN_RANGE_CODE](name)(value)(min),
-          span, sourceFile
-        )
-      );
-    } else if (value > max) {
-      reportList.push(
-        reportError(
-          GREATER_THAN_RANGE_CODE,
-          reports.errors[GREATER_THAN_RANGE_CODE](name)(value)(max),
-          span, sourceFile
-        )
-      );
-    }
-  }
+function hasBetweenType(str: string) {
+  return BETWEEN_TYPE_IN_STRING_REGEX.test(str);
 }
 
-function getProblemSpan(node: ts.VariableDeclaration): ts.TextSpan {
-  return ts.createTextSpan(node.name.getStart(), node.name.getEnd() - node.getStart());
+function isValidTypeScriptVersion(typescript: typeof ts) {
+  const [ major ] = typescript.version.split('.');
+
+  return +major >= 3;
 }
 
-function getRange(type: string): Range {
+function isVariableDeclaration(node: ts.Node): node is ts.VariableDeclaration {
+  return node.kind === ts.SyntaxKind.VariableDeclaration;
+}
+
+function isVariableStatement(node: ts.Node): node is ts.VariableStatement {
+  return node.kind === ts.SyntaxKind.VariableStatement;
+}
+
+function createRangeFromTypeString(type: string): Range[] {
   let min = 0;
   let max = 0;
 
@@ -233,61 +153,127 @@ function getRange(type: string): Range {
     }
   });
 
-  return [ min, max ];
+  return [[ min, max ]];
 }
 
-function reportError(
-  code: number,
-  messageText: string,
-  span: ts.TextSpan,
-  file: ts.SourceFile
-): ts.Diagnostic {
-  const { start, length } = span;
-
+function createRangeNode<T>(name: string, value: T, span: ts.TextSpan, node: ts.Node, ranges: Range[] = []): BetweenNode<T> {
   return {
-    file,
-    start, length,
-    code, messageText,
-    category: ts.DiagnosticCategory.Error,
-    source: PLUGIN_NAME
+    name, value,
+    source: project.sourceFile as ts.SourceFile,
+    span, ranges, reports: {}
   };
 }
 
-function log(
-  info: ts.server.PluginCreateInfo,
-  messageText: string
-) {
-  info.project.projectService.logger.info(`[${PLUGIN_NAME}] ${messageText}`);
+function createRangeId(name: string, start: number, end: number): number {
+  let id = -1;
+
+  const source = project.sourceFile;
+
+  if (source) {
+    id = getHash(`${source.fileName}:${name}:${start}:${end}`);
+  }
+
+  return id;
 }
 
-function isValidTypeScriptVersion(typescript: typeof ts) {
-  const [ major ] = typescript.version.split('.');
-
-  return +major >= 3;
+function createSpan(start: number, end: number): ts.TextSpan {
+  return ts.createTextSpan(start, end - start);
 }
 
-function isVariableDeclaration(node: ts.Node): node is ts.VariableDeclaration {
-  return node.kind === ts.SyntaxKind.VariableDeclaration;
+function createReportList<T>(node: BetweenNode<T>): ReportList {
+  let result: ReportList = {};
+
+  if (node.ranges.length > 0) {
+    const { ranges, value } = node;
+
+    ranges.forEach(range => {
+      result = {
+        ...testIsValueOutOfRange<any>(node, range)
+      };
+    });
+  }
+
+  return result;
 }
 
-function isExpressionStatement(node: ts.Node): node is ts.ExpressionStatement {
-  return node.kind === ts.SyntaxKind.ExpressionStatement;
+function testIsValueLessThanMin(name: string, min: number, value: number): Report | void {
+  if (min > value) {
+    return createReport(
+      reports.errors[LESS_THAN_RANGE_CODE](name)(value)(min),
+      ts.DiagnosticCategory.Error
+    );
+  }
 }
 
-function isBinaryExpression(node: ts.Node): node is ts.BinaryExpression {
-  return node.kind === ts.SyntaxKind.BinaryExpression;
+function testIsValueGreaterThanMax(name: string, max: number, value: number): Report | void {
+  if (value > max) {
+    return createReport(
+      reports.errors[GREATER_THAN_RANGE_CODE](name)(value)(max),
+      ts.DiagnosticCategory.Error
+    );
+  }
 }
 
-function isFirstAssignment(kind: ts.SyntaxKind): kind is ts.SyntaxKind.FirstAssignment {
-  return kind === ts.SyntaxKind.FirstAssignment;
+function testIsValueOutOfRange<T extends number>(node: BetweenNode<T>, range: Range): ReportList {
+  let result: ReportList = {};
+
+  const [ min, max ] = range;
+
+  if (node.value) {
+    const lessTestReport = testIsValueLessThanMin(node.name, min, node.value as any as number);
+    const greaterTestReport = testIsValueGreaterThanMax(node.name, max, node.value as any as number);
+
+    if (lessTestReport) {
+      result[LESS_THAN_RANGE_CODE] = lessTestReport;
+    }
+
+    if (greaterTestReport) {
+      result[LESS_THAN_RANGE_CODE] = greaterTestReport;
+    }
+  }
+
+  return result;
 }
 
-function hasBetweenType(str: string) {
-  return BETWEEN_TYPE_IN_STRING_REGEX.test(str);
+function createReport(message: string, category: ts.DiagnosticCategory): Report {
+  return { category, message };
 }
 
-function isBetweenType(str: string) {
-  return BETWEEN_TYPE_REGEX.test(str);
+function createRangeDiagnostics(): ts.Diagnostic[] {
+  let diagnostic: ts.Diagnostic[] = [];
+
+  const { rangeNodes } = project;
+
+  if (Object.keys(rangeNodes).length > 0) {
+    for (let id in rangeNodes) {
+      if (rangeNodes.hasOwnProperty(id)) {
+        const node: BetweenNode<any> = rangeNodes[id];
+        const { reports } = node;
+
+        if (Object.keys(reports).length > 0) {
+          for (let code in reports) {
+            if (reports.hasOwnProperty(code)) {
+              const report: Report = reports[code];
+              const { message, category } = report;
+              const { source, span } = node;
+              const { start, length } = span;
+
+              diagnostic.push({
+                category,
+                code: Number(code),
+                file: source,
+                start, length,
+                messageText: message,
+                source: PLUGIN_NAME
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return diagnostic;
 }
 
 module.exports = function(module: TypeScriptModule) {
@@ -295,3 +281,54 @@ module.exports = function(module: TypeScriptModule) {
     create: (info: ts.server.PluginCreateInfo) => createBetweenPlugin(info, module)
   };
 };
+
+// function isExpressionStatement(node: ts.Node): node is ts.ExpressionStatement {
+//   return node.kind === ts.SyntaxKind.ExpressionStatement;
+// }
+
+// function isBinaryExpression(node: ts.Node): node is ts.BinaryExpression {
+//   return node.kind === ts.SyntaxKind.BinaryExpression;
+// }
+
+// else if (isExpressionStatement(node)) {
+//   expressionStatementVisitor(sourceFile, node, reportList);
+// }
+// function expressionStatementVisitor(
+//   sourceFile: ts.SourceFile,
+//   node: ts.ExpressionStatement,
+//   reportList: ts.Diagnostic[]
+// ) {
+//   const definitions = currentLanguageService.getDefinitionAtPosition(sourceFile.fileName, node.getStart());
+
+//   if (program && definitions) {
+//     const [ firstDefinition ] = definitions;
+
+//     const source = program.getSourceFile(firstDefinition.fileName);
+
+//     if (source) {
+//       visitAllNodes(source, n => {
+//         if (isVariableDeclaration(n)) {
+//           const span = getProblemSpan(n);
+
+//           if (span.start === firstDefinition.textSpan.start) {
+//             const typeNode = n.type;
+
+//             if (typeNode) {
+//               reportList.push(
+//                 {
+//                   file: sourceFile,
+//                   start: node.getStart(),
+//                   length: node.getStart() - node.getEnd(),
+//                   code: 0,
+//                   messageText: (node.expression).getText(),
+//                   category: ts.DiagnosticCategory.Error,
+//                   source: PLUGIN_NAME
+//                 }
+//               );
+//             }
+//           }
+//         }
+//       });
+//     }
+//   }
+// }
