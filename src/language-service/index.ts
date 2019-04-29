@@ -2,13 +2,13 @@ import * as ts from 'typescript/lib/tsserverlibrary';
 
 import {
   getCurrentLanguageService,
-  getCurrentProgram,
   getCurrentSourceFile,
-  setCurrentBetweenNodeList,
-  setCurrentProgram,
+  getProgram,
+  setBetweenNodeList,
   setCurrentSourceFile,
+  setProgram,
 } from '../project';
-import { createBetweenDiagnostics } from '../reports/diagnostic-list';
+import { createBetweenDiagnosticList } from '../reports/diagnostic-list';
 import { nodeWalker, walkNodeList } from './walkers';
 
 export function createBetweenLanguageService(info: ts.server.PluginCreateInfo) {
@@ -23,13 +23,16 @@ export function createNextLanguageService(info: ts.server.PluginCreateInfo) {
   return { ...info.languageService };
 }
 
+// TODO: To delete
+export let test: ts.Diagnostic[] = [];
+
 export function createNextSemanticDiagnostics(fileName: string) {
   const previous = getSemanticDiagnostics(fileName) || [];
 
-  setCurrentBetweenNodeList({});
-  setCurrentProgram(getCurrentLanguageService().getProgram());
+  setBetweenNodeList({});
+  setProgram(getCurrentLanguageService().getProgram());
 
-  const program = getCurrentProgram();
+  const program = getProgram();
 
   if (program) {
     setCurrentSourceFile(program.getSourceFile(fileName));
@@ -41,7 +44,8 @@ export function createNextSemanticDiagnostics(fileName: string) {
     }
   }
 
-  return [ ...previous, ...createBetweenDiagnostics() ];
+  // TODO: delete ...test
+  return [ ...previous, ...createBetweenDiagnosticList(), ...test ];
 }
 
 export function getLanguageService(info: ts.server.PluginCreateInfo) {

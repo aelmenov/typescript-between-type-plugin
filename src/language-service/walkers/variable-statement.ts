@@ -1,10 +1,11 @@
 import * as ts from 'typescript/lib/tsserverlibrary';
 
-import { createBetweenId, createBetweenNode, createRangeFromTypeString } from '../../between';
-import { setCurrentBetweenNode } from '../../project';
-import { createReportList } from '../../reports';
-import { createSpan } from '../../utils';
+import { createBetweenNode, createRangeListFromTypeString } from '../../between';
+import { BetweenNodeTypeKind } from '../../between/enums';
+import { setBetweenNode } from '../../project';
 import { hasBetweenType, isVariableDeclaration } from '../../verificators';
+import { getNamedNodeParameters } from '../utils';
+import { createReportListForAssignments } from '../../reports/assignment-errors';
 
 export function variableStatementWalker(node: ts.VariableStatement) {
   node.declarationList.forEachChild(node => {
@@ -15,24 +16,28 @@ export function variableStatementWalker(node: ts.VariableStatement) {
 }
 
 export function variableDeclarationWalker(node: ts.VariableDeclaration) {
-  const typeNode = node.type;
+  const { type, initializer } = node;
 
-  if (typeNode) {
-    const types = typeNode.getText();
-    const initializer = node.initializer;
+  if (type) {
+    const types = type.getText();
 
-    if (types && hasBetweenType(types) && initializer) {
-      const value = +initializer.getText();
-      const nameNode = node.name;
-      const name = nameNode.getText();
-      const nameSpan = createSpan(nameNode.getStart(), nameNode.getEnd());
-      const id = createBetweenId(name, nameSpan.start, nameSpan.length);
-      const ranges = createRangeFromTypeString(types);
-      const betweenNode = createBetweenNode(name, value, nameSpan, ranges);
+    if (types && hasBetweenType(types)) {
+      const nodeParameters = getNamedNodeParameters(node);
 
-      betweenNode.reportList = createReportList(betweenNode);
+      if (nodeParameters) {
+        const { name, span, hash } = nodeParameters;
 
-      setCurrentBetweenNode(id, betweenNode);
+        const rangeList = createRangeListFromTypeString(types);
+        const betweenNode = createBetweenNode<number | undefined>(BetweenNodeTypeKind.VariableDefinition, name, undefined, span, rangeList);
+
+        if (initializer) {
+          betweenNode.value = +initializer.getText();
+
+          betweenNode.reportList = createReportListForAssignments(betweenNode, span);
+        }
+
+        setBetweenNode(hash, betweenNode);
+      }
     }
   }
 }

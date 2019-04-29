@@ -1,4 +1,7 @@
+import * as ts from 'typescript/lib/tsserverlibrary';
+
 export type Report = {
+  span: ts.TextSpan;
   category: ts.DiagnosticCategory;
   message: string;
 };

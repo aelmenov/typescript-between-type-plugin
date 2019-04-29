@@ -2,20 +2,20 @@ import * as ts from 'typescript/lib/tsserverlibrary';
 
 import { BetweenNode } from '../between/types';
 import { PLUGIN_NAME } from '../config';
-import { getCurrentBetweenNodeList } from '../project';
+import { getBetweenNodeList } from '../project';
 import { forEach } from '../utils';
 import { Report } from './types';
 
-export function createBetweenDiagnostics(): ts.Diagnostic[] {
+export function createBetweenDiagnosticList(): ts.Diagnostic[] {
   let diagnostics: ts.Diagnostic[] = [];
 
-  forEach(getCurrentBetweenNodeList(), ([ , node ]) => {
-    const { reportList } = node as BetweenNode<any>;
+  forEach(getBetweenNodeList(), ([ , betweenNode ]) => {
+    const { reportList } = betweenNode as BetweenNode<any>;
 
     forEach(reportList, ([ code ]) => {
       const report = reportList[code] as Report;
-      const { message, category } = report;
-      const { source, span } = node as BetweenNode<any>;
+      const { span, message, category } = report;
+      const { source } = betweenNode as BetweenNode<any>;
       const { start, length } = span;
 
       diagnostics.push({

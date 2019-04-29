@@ -23,3 +23,11 @@ export function isVariableDeclaration(node: ts.Node): node is ts.VariableDeclara
 export function isVariableStatement(node: ts.Node): node is ts.VariableStatement {
   return node.kind === ts.SyntaxKind.VariableStatement;
 }
+
+export function isExpressionStatement(node: ts.Node): node is ts.ExpressionStatement {
+  return node.kind === ts.SyntaxKind.ExpressionStatement;
+}
+
+export function isBinaryExpression(node: ts.Node): node is ts.BinaryExpression {
+  return node.kind === ts.SyntaxKind.BinaryExpression;
+}

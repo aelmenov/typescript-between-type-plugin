@@ -9,7 +9,7 @@ export function getProject() {
   return project;
 }
 
-export function getCurrentProgram() {
+export function getProgram() {
   return project.program;
 }
 
@@ -21,11 +21,11 @@ export function getCurrentLanguageService() {
   return project.languageService;
 }
 
-export function getCurrentBetweenNodeList() {
+export function getBetweenNodeList() {
   return project.betweenNodeList;
 }
 
-export function getCurrentBetweenNode<T>(id: number): BetweenNode<T> {
+export function getBetweenNode<T>(id: number): BetweenNode<T> {
   return project.betweenNodeList[id];
 }
 
@@ -33,7 +33,7 @@ export function setProject(newProject: Project) {
   project = newProject;
 }
 
-export function setCurrentProgram(program?: ts.Program) {
+export function setProgram(program?: ts.Program) {
   project.program = program;
 }
 
@@ -45,10 +45,10 @@ export function setCurrentLanguageService(languageService: ts.LanguageService) {
   project.languageService = languageService;
 }
 
-export function setCurrentBetweenNodeList(betweenNodeList: BetweenNodeList) {
+export function setBetweenNodeList(betweenNodeList: BetweenNodeList) {
   project.betweenNodeList = betweenNodeList;
 }
 
-export function setCurrentBetweenNode<T>(id: number, node: BetweenNode<T>) {
+export function setBetweenNode<T>(id: number, node: BetweenNode<T>) {
   project.betweenNodeList[id] = node;
 }
