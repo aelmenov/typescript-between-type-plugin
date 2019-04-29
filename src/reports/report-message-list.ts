@@ -1,7 +1,7 @@
-import { GREATER_THAN_RANGE_CODE, INVALID_TYPESCRIPT_VERSION, LESS_THAN_RANGE_CODE } from './constants';
+import { GREATER_THAN_RANGE_CODE, INVALID_TYPESCRIPT_VERSION, LESS_THAN_RANGE_CODE } from './config';
 import { ReportMessageList } from './types';
 
-export const reports: ReportMessageList = {
+export const reportMessageList: ReportMessageList = {
   log: {
     [INVALID_TYPESCRIPT_VERSION]: `Invalid TypeScript version detected. TypeScript 3.x required.`,
   },

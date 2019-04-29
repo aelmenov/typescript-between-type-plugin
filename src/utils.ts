@@ -1,7 +1,22 @@
-import { PLUGIN_NAME } from './constants';
+import * as ts from 'typescript/lib/tsserverlibrary';
+
+import { PLUGIN_NAME } from './config';
+import { Action } from './types';
 
 export function log(info: ts.server.PluginCreateInfo, messageText: string) {
   info.project.projectService.logger.info(`[${PLUGIN_NAME}] ${messageText}`);
+}
+
+export function createSpan(start: number, end: number) {
+  return ts.createTextSpan(start, end - start);
+}
+
+export function forEach<T, V>(source: T, action: Action<keyof T, V>) {
+  for (let prop in source) {
+    if (source.hasOwnProperty(prop)) {
+      action([ prop, source[prop] as any ]);
+    }
+  }
 }
 
 export function getHash(source: string) {

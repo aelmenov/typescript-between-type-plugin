@@ -1,0 +1,3 @@
+export const INVALID_TYPESCRIPT_VERSION = 0xf000;
+export const LESS_THAN_RANGE_CODE = 0xf101;
+export const GREATER_THAN_RANGE_CODE = 0xf102;
