@@ -18,7 +18,6 @@ export function createRangeListFromTypeString(type: string) {
 
         result.push([ start, end ]);
       }
-
     }
   });
 
