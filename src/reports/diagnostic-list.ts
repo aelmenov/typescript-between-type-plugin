@@ -4,16 +4,14 @@ import { BetweenNode } from '../between/types';
 import { PLUGIN_NAME } from '../config';
 import { getBetweenNodeList } from '../project';
 import { forEach } from '../utils';
-import { Report } from './types';
 
-export function createBetweenDiagnosticList(): ts.Diagnostic[] {
+export function createBetweenDiagnosticList() {
   let diagnostics: ts.Diagnostic[] = [];
 
   forEach(getBetweenNodeList(), ([ , betweenNode ]) => {
     const { reportList } = betweenNode as BetweenNode<any>;
 
-    forEach(reportList, ([ code ]) => {
-      const report = reportList[code] as Report;
+    reportList.forEach(([ code, report ]) => {
       const { span, message, category } = report;
       const { source } = betweenNode as BetweenNode<any>;
       const { start, length } = span;

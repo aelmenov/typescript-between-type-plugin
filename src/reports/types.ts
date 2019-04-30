@@ -6,9 +6,9 @@ export type Report = {
   message: string;
 };
 
-export type ReportList = {
-  [code: number]: Report;
-};
+export type ReportNode = [ number, Report ];
+
+export type ReportList = ReportNode[];
 
 export type ReportMessageList = {
   [category: string]: {

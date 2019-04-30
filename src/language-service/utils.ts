@@ -1,6 +1,7 @@
 import * as ts from 'typescript/lib/tsserverlibrary';
-import { createSpan } from '../utils';
+
 import { createBetweenNodeHash } from '../between';
+import { createSpan } from '../utils';
 import { NamedNodeParameters } from './types';
 
 export function getNamedNodeParameters(node: ts.Node): NamedNodeParameters | void {

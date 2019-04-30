@@ -41,10 +41,10 @@ export function expressionStatementWalker(node: ts.ExpressionStatement) {
 
                     betweenNode.value = value;
 
-                    betweenNode.reportList = {
+                    betweenNode.reportList = [
                       ...betweenNode.reportList,
                       ...createReportListForAssignments(betweenNode, span)
-                    };
+                    ];
                   }
                 }
               }

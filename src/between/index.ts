@@ -4,15 +4,15 @@ import { getCurrentSourceFile } from '../project';
 import { getHash } from '../utils';
 import { isBetweenType } from '../verificators';
 import { BETWEEN_VALUE_REGEX } from './config';
-import { BetweenNode, Range } from './types';
 import { BetweenNodeTypeKind } from './enums';
+import { BetweenNode, RangeList } from './types';
 
-export function createBetweenNode<T>(type: BetweenNodeTypeKind, name: string, value: T, span: ts.TextSpan, ranges: Range[] = []): BetweenNode<T> {
+export function createBetweenNode<T>(type: BetweenNodeTypeKind, name: string, value: T, span: ts.TextSpan, ranges: RangeList = []): BetweenNode<T> {
   return {
     type, name, value,
     source: getCurrentSourceFile() as ts.SourceFile,
-    ranges,
-    reportList: {}
+    rangeList: ranges,
+    reportList: []
   };
 }
 
@@ -28,7 +28,7 @@ export function createBetweenNodeHash(name: string, start: number, end: number) 
   return id;
 }
 
-export function createRangeListFromTypeString(type: string): Range[] {
+export function createRangeListFromTypeString(type: string): RangeList {
   let min = 0;
   let max = 0;
 
