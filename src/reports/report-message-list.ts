@@ -28,5 +28,5 @@ function getMessageOfTheOutOfRange(
 ) {
   const type = ranges.map(x => `Between<${x.join(', ')}>`).join(' | ');
 
-  return `Value '${value}' is not assignable to type '${type}'.\nYour value is ${comparison} than '${availableValue}'.`;
+  return `Value '${value}' is not assignable to type '${type}'.\nSpecified value is ${comparison} than '${availableValue}'.`;
 }
