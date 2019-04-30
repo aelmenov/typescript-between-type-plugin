@@ -31,3 +31,15 @@ export function isExpressionStatement(node: ts.Node): node is ts.ExpressionState
 export function isBinaryExpression(node: ts.Node): node is ts.BinaryExpression {
   return node.kind === ts.SyntaxKind.BinaryExpression;
 }
+
+export function isFunctionDeclaration(node: ts.Node): node is ts.FunctionDeclaration {
+  return node.kind === ts.SyntaxKind.FunctionDeclaration;
+}
+
+export function isFunctionExpression(node: ts.Node): node is ts.FunctionExpression {
+  return node.kind === ts.SyntaxKind.FunctionExpression;
+}
+
+export function isArrowFunction(node: ts.Node): node is ts.ArrowFunction {
+  return node.kind === ts.SyntaxKind.ArrowFunction;
+}
