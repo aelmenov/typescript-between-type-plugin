@@ -65,7 +65,7 @@ export function createReportIfAssignmentsIsOutOfRange<T extends number>(node: Be
   return report;
 }
 
-export function createOutOfRangeReport<T extends number>(code: number, span: ts.TextSpan, value: number, availableValue: number, ranges: RangeList) {
+export function createOutOfRangeReport(code: number, span: ts.TextSpan, value: number, availableValue: number, ranges: RangeList) {
   return createReport(
     span,
     reportMessageList.errors[code](value)(availableValue)(ranges),
