@@ -4,7 +4,6 @@ import { walkNodeList } from '.';
 import { getBetweenNode, getCurrentLanguageService, getCurrentSourceFile, getProgram } from '../../project';
 import { createReportListForAssignments } from '../../reports/assignment-errors';
 import { createSpan } from '../../utils';
-import { isVariableDeclaration } from '../../verificators';
 import { getNamedNodeParameters } from '../utils';
 
 export function expressionStatementWalker(node: ts.ExpressionStatement) {
@@ -22,7 +21,7 @@ export function expressionStatementWalker(node: ts.ExpressionStatement) {
 
       if (source) {
         walkNodeList(source, definitionNode => {
-          if (isVariableDeclaration(definitionNode)) {
+          if (ts.isVariableDeclaration(definitionNode)) {
             if (definitionNode.getStart() === firstDefinition.textSpan.start) {
               const { type } = definitionNode;
 

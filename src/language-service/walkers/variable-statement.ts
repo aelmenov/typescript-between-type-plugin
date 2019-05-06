@@ -3,14 +3,14 @@ import * as ts from 'typescript/lib/tsserverlibrary';
 import { createBetweenNode } from '../../between';
 import { BetweenNodeTypeKind } from '../../between/enums';
 import { setBetweenNode } from '../../project';
-import { hasBetweenType, isVariableDeclaration } from '../../verificators';
+import { hasBetweenType } from '../../verificators';
 import { getNamedNodeParameters } from '../utils';
 import { createReportListForAssignments } from '../../reports/assignment-errors';
 import { createRangeListFromTypeString } from '../../between/utils';
 
 export function variableStatementWalker(node: ts.VariableStatement) {
   node.declarationList.forEachChild(node => {
-    if (isVariableDeclaration(node)) {
+    if (ts.isVariableDeclaration(node)) {
       variableDeclarationWalker(node);
     }
   });
