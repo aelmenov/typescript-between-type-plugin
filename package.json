@@ -1,9 +1,9 @@
 {
   "name": "typescript-between-type-plugin",
   "version": "0.0.1",
-  "description": "Add supports of the new type named 'between' into the TypeScript. This type allows to set ranges of the numbers for numeric variables.",
+  "description": "Experimental TypeScript language service plugin for numeric range diagnostics.",
   "main": "lib/index.js",
-  "declaration": "lib.between.d.ts",
+  "types": "lib.between.d.ts",
   "scripts": {
     "compile": "./node_modules/.bin/tsc",
     "compile:watch": "./node_modules/.bin/tsc --watch",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alexelmenov/typescript-between-type-plugin.git"
+    "url": "git+https://github.com/aelmenov/typescript-between-type-plugin.git"
   },
   "keywords": [
     "typescript",
@@ -24,9 +24,9 @@
   "author": "Alex Elmenov",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/alexelmenov/typescript-between-type-plugin/issues"
+    "url": "https://github.com/aelmenov/typescript-between-type-plugin/issues"
   },
-  "homepage": "https://github.com/alexelmenov/typescript-between-type-plugin#readme",
+  "homepage": "https://github.com/aelmenov/typescript-between-type-plugin#readme",
   "devDependencies": {
     "@types/node": "^11.13.7",
     "tslint": "^5.16.0",
