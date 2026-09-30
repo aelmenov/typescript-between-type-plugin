@@ -1,10 +1,16 @@
-import * as ts from 'typescript/lib/tsserverlibrary';
+import type { TSESLint } from '@typescript-eslint/utils';
+import withinRange from './rules/within-range.js';
 
-import { createBetweenPlugin } from './plugin';
-import { TypeScriptModule } from './types';
-
-module.exports = function(module: TypeScriptModule) {
-  return {
-    create: (info: ts.server.PluginCreateInfo) => createBetweenPlugin(info, module)
-  };
+const plugin = {
+  meta: { name: 'eslint-plugin-between', version: '0.0.1' },
+  rules: { 'within-range': withinRange },
+  configs: {} as Record<string, TSESLint.FlatConfig.Config>,
 };
+
+plugin.configs.recommended = {
+  name: 'between/recommended',
+  plugins: { between: plugin },
+  rules: { 'between/within-range': 'error' },
+};
+
+export default plugin;

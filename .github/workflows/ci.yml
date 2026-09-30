@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        eslint: ['9', '10']
+        typescript: ['5.0.4', '5.9.3', '6.0.3']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save --package-lock=false eslint@${{ matrix.eslint }} @eslint/js@${{ matrix.eslint }} typescript@${{ matrix.typescript }}
+      - run: npm run build
+      - run: npm pack --dry-run --ignore-scripts

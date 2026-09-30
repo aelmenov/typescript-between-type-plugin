@@ -1,25 +1,28 @@
 {
-  "name": "typescript-between-type-plugin",
+  "name": "eslint-plugin-between",
   "version": "0.0.1",
-  "description": "Experimental TypeScript language service plugin for numeric range diagnostics.",
-  "main": "lib/index.js",
-  "types": "lib.between.d.ts",
+  "description": "ESLint rules for inclusive numeric ranges in TypeScript.",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "scripts": {
-    "compile": "./node_modules/.bin/tsc",
-    "compile:watch": "./node_modules/.bin/tsc --watch",
-    "lint": "./node_modules/.bin/tslint -c tslint.json -p tsconfig.json"
+    "compile": "node scripts/clean.mjs && tsc -p tsconfig.json",
+    "compile:watch": "tsc -p tsconfig.json --watch",
+    "lint": "eslint . --max-warnings 0",
+    "test": "npm run compile && node --test tests/*.test.mjs",
+    "check": "npm run lint && npm test",
+    "build": "npm run check",
+    "prepack": "npm run build"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aelmenov/typescript-between-type-plugin.git"
   },
   "keywords": [
+    "eslint",
+    "eslintplugin",
     "typescript",
-    "ts",
-    "typescript-plugin",
-    "ts-plugin",
     "between",
-    "type"
+    "range"
   ],
   "author": "Alex Elmenov",
   "license": "MIT",
@@ -28,8 +31,43 @@
   },
   "homepage": "https://github.com/aelmenov/typescript-between-type-plugin#readme",
   "devDependencies": {
-    "@types/node": "^11.13.7",
-    "tslint": "^5.16.0",
-    "typescript": "^3.4.5"
+    "@eslint/js": "^10.0.0",
+    "@typescript-eslint/parser": "^8.71.0",
+    "@typescript-eslint/rule-tester": "^8.71.0",
+    "eslint": "^10.0.0",
+    "typescript": "~6.0.0",
+    "typescript-eslint": "^8.71.0"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./types": "./lib.between.d.ts"
+  },
+  "files": [
+    "lib",
+    "lib.between.d.ts",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24.0.0"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0 || ^10.0.0",
+    "typescript": ">=5.0.0 <6.1.0"
+  },
+  "dependencies": {
+    "@typescript-eslint/utils": "^8.71.0"
+  },
+  "typesVersions": {
+    "*": {
+      "types": [
+        "lib.between.d.ts"
+      ]
+    }
   }
 }
