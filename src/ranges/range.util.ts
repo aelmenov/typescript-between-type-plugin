@@ -1,4 +1,4 @@
-export type Range = readonly [min: number, max: number];
+import type { Range } from './range.types.js';
 
 export function contains(ranges: readonly Range[], value: number): boolean {
   return ranges.some(([min, max]) => min <= value && value <= max);

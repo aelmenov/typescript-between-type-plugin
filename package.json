@@ -1,7 +1,7 @@
 {
   "name": "eslint-plugin-between",
   "version": "0.0.1",
-  "description": "ESLint rules for inclusive numeric ranges in TypeScript.",
+  "description": "ESLint plugin that checks inclusive TypeScript numeric ranges, arithmetic, and function contracts.",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "scripts": {
@@ -9,9 +9,11 @@
     "compile:watch": "tsc -p tsconfig.json --watch",
     "lint": "eslint . --max-warnings 0",
     "test": "npm run compile && node --test tests/*.test.mjs",
-    "check": "npm run lint && npm test",
+    "check": "npm run format:check && npm run lint && npm test",
     "build": "npm run check",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "repository": {
     "type": "git",
@@ -35,6 +37,7 @@
     "@typescript-eslint/parser": "^8.71.0",
     "@typescript-eslint/rule-tester": "^8.71.0",
     "eslint": "^10.0.0",
+    "prettier": "^3.9.9",
     "typescript": "~6.0.0",
     "typescript-eslint": "^8.71.0"
   },

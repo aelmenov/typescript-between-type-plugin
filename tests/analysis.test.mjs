@@ -4,9 +4,17 @@ import { ESLint } from 'eslint';
 import parser from '@typescript-eslint/parser';
 import plugin from '../lib/index.js';
 
-const eslint = new ESLint({ overrideConfigFile: true, overrideConfig: [{
-  ...plugin.configs.recommended, files: ['**/*.ts'], languageOptions: { parser },
-}] });
+const eslint = new ESLint({
+  overrideConfigFile: true,
+  overrideConfig: [
+    {
+      ...plugin.configs.recommended,
+      files: ['**/*.ts'],
+      languageOptions: { parser },
+    },
+  ],
+});
+
 const valid = [
   'const x: {red?: Byte} = {};',
   'const x: Byte | undefined = undefined;',
@@ -51,6 +59,7 @@ const valid = [
   'const xs: Byte[] = [1, 2]; for (const x of xs) { const a: Byte = x; }',
   'const pair: {x: Byte} = {x: 10}; const {x} = pair; const a: Byte = x;',
 ];
+
 const invalid = [
   ['const f: (x: Byte) => Byte = x => x; f(256);', 'outOfRange'],
   ['const c: {f: () => Byte} = {f: () => 256};', 'outOfRange'],
@@ -59,20 +68,38 @@ const invalid = [
   ['let a: Byte = 0; [a] = [256];', 'outOfRange'],
   ['let a: Byte = 0; ({x: a} = {x: 256});', 'outOfRange'],
   ['let {x}: {x: Byte} = {x: 0}; x = 256;', 'outOfRange'],
-  ['function f(xs: Byte[]) { const n: Byte = xs.length; }', 'possibleOutOfRange'],
-  ['type C<T> = T extends string ? Byte : Short; const x: C<string> = 300;', 'invalidRange'],
+  [
+    'function f(xs: Byte[]) { const n: Byte = xs.length; }',
+    'possibleOutOfRange',
+  ],
+  [
+    'type C<T> = T extends string ? Byte : Short; const x: C<string> = 300;',
+    'invalidRange',
+  ],
 
   ['function f(): Byte { if (flag) return 1; }', 'unknownRange'],
-  ['function f(x: number) { if (x < 0 || x > 255) return; const a: Byte = x; }', 'possibleOutOfRange'],
-  ['function f(x: Between<1, 2>, y: Between<-1, 1>): Byte { return x / y; }', 'unknownRange'],
+  [
+    'function f(x: number) { if (x < 0 || x > 255) return; const a: Byte = x; }',
+    'possibleOutOfRange',
+  ],
+  [
+    'function f(x: Between<1, 2>, y: Between<-1, 1>): Byte { return x / y; }',
+    'unknownRange',
+  ],
   ['let a: Byte = 2; a **= 8;', 'outOfRange'],
 
-  ['function f(x: string) { if (x >= 0 && x <= 255) { const a: Byte = x; } }', 'unknownRange'],
+  [
+    'function f(x: string) { if (x >= 0 && x <= 255) { const a: Byte = x; } }',
+    'unknownRange',
+  ],
   ['let x: Byte = 0; switch (flag) { case 1: x = 256; break; }', 'outOfRange'],
   ['let x: Byte = 0; try { external(); } catch (e) { x = 256; }', 'outOfRange'],
   ['class C { x: Byte = 0; } const c = new C(); c.x = 256;', 'outOfRange'],
   ['const a: [Byte, Short] = [0, 0]; a[i] = 300;', 'outOfRange'],
-  ['const a: {x: Byte} = {x: 1}; external(a); const b: Byte = a.x;', 'unknownRange'],
+  [
+    'const a: {x: Byte} = {x: 1}; external(a); const b: Byte = a.x;',
+    'unknownRange',
+  ],
 
   ['const a = 250; const b: Byte = a + 10;', 'outOfRange'],
   ['let a: Byte = 250; a += 10;', 'outOfRange'],
@@ -82,15 +109,30 @@ const invalid = [
   ['function f(x: Short): Byte { return x; }', 'possibleOutOfRange'],
   ['function f(x: number): Byte { return x; }', 'unknownRange'],
   ['const a: Byte = external();', 'unknownRange'],
-  ['function f(x: number) { if (x >= 0 && x <= 255) { x = 500; const a: Byte = x; } }', 'outOfRange'],
-  ['function f(x: number) { if (x >= 0 && x <= 255) {} const a: Byte = x; }', 'possibleOutOfRange'],
-  ['function f(x: number) { if (x >= 0 && x <= 255) { mutate(); const a: Byte = x; } }', 'unknownRange'],
+  [
+    'function f(x: number) { if (x >= 0 && x <= 255) { x = 500; const a: Byte = x; } }',
+    'outOfRange',
+  ],
+  [
+    'function f(x: number) { if (x >= 0 && x <= 255) {} const a: Byte = x; }',
+    'possibleOutOfRange',
+  ],
+  [
+    'function f(x: number) { if (x >= 0 && x <= 255) { mutate(); const a: Byte = x; } }',
+    'unknownRange',
+  ],
   ['function f(x: Byte) {} f(256);', 'outOfRange'],
   ['function f(): Byte { return 256; }', 'outOfRange'],
   ['const f: () => Byte = () => 256;', 'outOfRange'],
   ['function f() { return 300; } const a: Byte = f();', 'outOfRange'],
-  ['type Positive<M extends number> = Between<0, M>; const a: Positive<10> = 11;', 'outOfRange'],
-  ['type R<T extends number> = Between<0, T>; type B = R<255>; const a: B = 256;', 'outOfRange'],
+  [
+    'type Positive<M extends number> = Between<0, M>; const a: Positive<10> = 11;',
+    'outOfRange',
+  ],
+  [
+    'type R<T extends number> = Between<0, T>; type B = R<255>; const a: B = 256;',
+    'outOfRange',
+  ],
   ['type Bad = Between<10, 1>;', 'invalidRange'],
   ['type Bad = Between<0, 1e309>;', 'invalidRange'],
   ['type Bad = Between<0, number>;', 'invalidRange'],
@@ -110,23 +152,65 @@ const invalid = [
   ['const a: Byte = external() as Byte;', 'unknownRange'],
   ['const a = 256 satisfies Byte;', 'outOfRange'],
   ['let a: Byte = 0; while (flag) { a++; }', 'possibleOutOfRange'],
-  ['let a: Byte = 1; if (flag) a = 500; const b: Byte = a;', 'outOfRange', 'possibleOutOfRange'],
+  [
+    'let a: Byte = 1; if (flag) a = 500; const b: Byte = a;',
+    'outOfRange',
+    'possibleOutOfRange',
+  ],
 ];
-for (const code of valid) test(`accept: ${code}`, async () => {
-  const [result] = await eslint.lintText(code, { filePath: 'analysis-input.ts' });
-  assert.deepEqual(result.messages, []);
-});
-for (const [code, ...expected] of invalid) test(`reject: ${code}`, async () => {
-  const [result] = await eslint.lintText(code, { filePath: 'analysis-input.ts' });
-  assert.deepEqual(result.messages.map(message => message.messageId), expected, JSON.stringify(result.messages));
-});
+
+for (const code of valid)
+  test(`accept: ${code}`, async () => {
+    const [result] = await eslint.lintText(code, {
+      filePath: 'analysis-input.ts',
+    });
+
+    assert.deepEqual(result.messages, []);
+  });
+
+for (const [code, ...expected] of invalid)
+  test(`reject: ${code}`, async () => {
+    const [result] = await eslint.lintText(code, {
+      filePath: 'analysis-input.ts',
+    });
+
+    assert.deepEqual(
+      result.messages.map((message) => message.messageId),
+      expected,
+      JSON.stringify(result.messages),
+    );
+  });
+
 test('cycles produce diagnostics without recursion failure', async () => {
-  const [result] = await eslint.lintText('type A = B; type B = A; const a: A = 1;', { filePath: 'analysis-input.ts' });
+  const [result] = await eslint.lintText(
+    'type A = B; type B = A; const a: A = 1;',
+    { filePath: 'analysis-input.ts' },
+  );
+
   assert.ok(result.messages.length > 0);
-  assert.ok(result.messages.every(message => message.messageId === 'invalidRange'));
+  assert.ok(
+    result.messages.every((message) => message.messageId === 'invalidRange'),
+  );
 });
+
 test('unknown values can be explicitly ignored', async () => {
-  const lint = new ESLint({ overrideConfigFile: true, overrideConfig: [{ files: ['**/*.ts'], languageOptions: { parser }, plugins: { between: plugin }, rules: { 'between/within-range': ['error', { unknownValues: 'ignore' }] } }] });
-  const [result] = await lint.lintText('const a: Byte = external();', { filePath: 'analysis-input.ts' });
+  const lint = new ESLint({
+    overrideConfigFile: true,
+    overrideConfig: [
+      {
+        files: ['**/*.ts'],
+        languageOptions: { parser },
+        plugins: { between: plugin },
+        rules: {
+          'between/within-range': ['error', { unknownValues: 'ignore' }],
+        },
+      },
+    ],
+  });
+
+  const [result] = await lint.lintText('const a: Byte = external();', {
+    filePath: 'analysis-input.ts',
+  });
+
   assert.deepEqual(result.messages, []);
 });

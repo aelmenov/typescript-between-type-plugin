@@ -5,12 +5,12 @@ provides no automatic fixes because changing a numeric value can alter behavior.
 
 ## Diagnostics
 
-| Message ID | Meaning |
-| --- | --- |
-| `outOfRange` | The known value or all possible numeric values are outside the target. |
-| `possibleOutOfRange` | Some possible values, or a possible NaN, violate the target. |
-| `unknownRange` | The analyzer cannot prove that the value satisfies the target. |
-| `invalidRange` | The range has invalid bounds, arguments, recursion, or an unsupported range-bearing type construct. |
+| Message ID           | Meaning                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------- |
+| `outOfRange`         | The known value or all possible numeric values are outside the target.                              |
+| `possibleOutOfRange` | Some possible values, or a possible NaN, violate the target.                                        |
+| `unknownRange`       | The analyzer cannot prove that the value satisfies the target.                                      |
+| `invalidRange`       | The range has invalid bounds, arguments, recursion, or an unsupported range-bearing type construct. |
 
 Unknown values are errors by default. The optional compatibility setting below
 ignores unknown values, but still reports known or possible violations:
@@ -49,7 +49,7 @@ semantics; the range types themselves never require integer values.
 All computation uses JavaScript `number`, including rounding, infinity, and NaN.
 `0.1 + 0.2` exceeds `Between<0, 0.3>`. A computed NaN is outside every range.
 Only the final result of an expression has the destination range; intermediate
-values do not implicitly acquire it. [Large bound limitations](../numeric-aliases.md#precision-limitations)
+values do not implicitly acquire it. [Large bound limitations](numeric-aliases.md#precision-limitations)
 still apply.
 
 ## Narrowing and unknown values
@@ -87,7 +87,9 @@ array elements, tuples, records, literal spreads, and basic destructuring are
 supported. Array `push`, `unshift`, `splice`, and `fill` check inserted values.
 
 ```ts
-interface Color { red: Byte; }
+interface Color {
+  red: Byte;
+}
 const color: Color = { red: 256 }; // Error
 const channels: Byte[] = [0, 255];
 channels.push(256); // Error

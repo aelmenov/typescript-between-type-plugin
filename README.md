@@ -30,12 +30,18 @@ npm ci
 npm run build
 ```
 
-`build` runs lint, compilation, and tests. `compile` builds only the plugin;
-`compile:watch` rebuilds it during development. Tests use inline source strings;
-behavior examples live in [docs/range-behavior.md](docs/range-behavior.md).
+`build` checks formatting and runs lint, compilation, and tests. `compile` builds
+only the plugin; `compile:watch` rebuilds it during development. Tests use inline
+source strings; behavior examples live in [docs/range-behavior.md](docs/range-behavior.md).
 
-The package is now named `eslint-plugin-between`. The old TypeScript language
-service entry point and TSLint configuration have been removed.
+Compilation writes ESM JavaScript and public TypeScript declarations to `lib/`.
+The compiler uses strict typing and checks indexed access. `npm run format` formats
+source, tests, configuration, and documentation; `npm run format:check` verifies them.
+Analysis separates statement traversal, expression evaluation, type resolution,
+range checking, and diagnostics. Source is grouped into `analysis/`, `ranges/`,
+and `rules/`; analysis subdirectories keep related implementations and contracts
+together. See [development conventions](docs/development.md) for module
+responsibilities, source structure, and verification.
 
 ## Use in another project
 
@@ -76,8 +82,9 @@ existing entries in `compilerOptions.types`:
 }
 ```
 
-Remove the old entry from `compilerOptions.plugins`. In VS Code, enable the
-ESLint extension for TypeScript files. Diagnostics now come from ESLint.
+If migrating from the language-service plugin, remove its entry from
+`compilerOptions.plugins`. In VS Code, enable the ESLint extension for TypeScript
+files. Diagnostics come from ESLint.
 
 To fail the consuming project's build on a range error, run ESLint before its
 compiler:
@@ -96,9 +103,8 @@ no runtime validation.
 
 ## Numeric aliases
 
-The global declarations include `Byte`, `Short`, `Int`, `Long`, their unsigned
-counterparts, `SByte`, `Half`, `Float`, `Double`, `Decimal`, `Int128`, `UInt128`,
-and explicit 32-bit and 64-bit native-range variants.
+The global declarations include `SByte`, `Byte`, `Short`, `UShort`, `Int`, `UInt`,
+`Long`, `ULong`, `Float`, `Double`, and `Decimal`.
 
 ```ts
 type Channel = Byte;
@@ -106,8 +112,8 @@ let channel: Channel = 128.5; // Valid: range checking only
 channel = 256; // Error
 ```
 
-See [numeric aliases](docs/numeric-aliases.md) for the full list, .NET source
-references, and JavaScript precision limitations at large bounds.
+See [numeric aliases](docs/numeric-aliases.md) for all bounds and JavaScript
+precision limitations.
 
 ## Analysis
 
@@ -121,7 +127,7 @@ loops are analyzed conservatively instead of being unrolled. Calls invalidate
 mutable facts because they may have side effects. Assertions do not prove a range.
 
 Diagnostics distinguish a definite violation, a possible violation, an unknown
-value, and an invalid range declaration. See [the rule documentation](docs/rules/within-range.md)
+value, and an invalid range declaration. See [the rule documentation](docs/within-range.md)
 for examples, options, and the supported proof boundaries. This is a conservative
 static analyzer, not a complete verifier of arbitrary TypeScript programs.
 
