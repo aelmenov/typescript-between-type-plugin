@@ -1,6 +1,6 @@
 import parser from '@typescript-eslint/parser';
 import { TSESLint } from '@typescript-eslint/utils';
-import plugin from 'eslint-plugin-between';
+import plugin from '@elmenov-softworks/eslint-plugin-between';
 import { createLinter, lintSource } from '../support/lint.util.js';
 import { dedent } from '../support/source.util.js';
 

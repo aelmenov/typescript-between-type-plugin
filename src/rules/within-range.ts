@@ -5,7 +5,7 @@ import { analyze } from '../analysis/analyzer/analyzer.service.js';
 
 export default ESLintUtils.RuleCreator(
   () =>
-    'https://github.com/aelmenov/typescript-between-type-plugin/blob/master/docs/within-range.md',
+    'https://github.com/elmenov-softworks/eslint-plugin-between/blob/master/docs/within-range.md',
 )<[WithinRangeOptions], Message>({
   name: 'within-range',
   meta: {

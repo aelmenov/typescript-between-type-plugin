@@ -1,6 +1,6 @@
 import parser from '@typescript-eslint/parser';
 import { TSESLint } from '@typescript-eslint/utils';
-import plugin from 'eslint-plugin-between';
+import plugin from '@elmenov-softworks/eslint-plugin-between';
 
 interface LintOptions {
   cwd?: string;

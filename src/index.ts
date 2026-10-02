@@ -4,7 +4,7 @@ import withinRange from './rules/within-range.js';
 const configs: Record<string, TSESLint.FlatConfig.Config> = {};
 
 const plugin = {
-  meta: { name: 'eslint-plugin-between', version: '0.0.1' },
+  meta: { name: '@elmenov-softworks/eslint-plugin-between', version: '1.0.0' },
   rules: { 'within-range': withinRange },
   configs,
 };

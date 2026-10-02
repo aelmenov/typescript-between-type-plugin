@@ -13,8 +13,12 @@ describe('Global declarations installed in a consumer project', () => {
   beforeEach(async () => {
     directory = await createProject();
 
-    await mkdir(join(directory, 'node_modules'));
-    await symlink(packageRoot, join(directory, 'node_modules/eslint-plugin-between'), 'junction');
+    await mkdir(join(directory, 'node_modules/@elmenov-softworks'), { recursive: true });
+    await symlink(
+      packageRoot,
+      join(directory, 'node_modules/@elmenov-softworks/eslint-plugin-between'),
+      'junction',
+    );
     await writeProjectFile(
       directory,
       'input.ts',
@@ -45,7 +49,7 @@ describe('Global declarations installed in a consumer project', () => {
       configFilePath: join(directory, 'tsconfig.json'),
       noEmit: true,
       strict: true,
-      types: ['eslint-plugin-between/types'],
+      types: ['@elmenov-softworks/eslint-plugin-between/types'],
       moduleResolution,
       module,
       ignoreDeprecations: '6.0',

@@ -1,5 +1,5 @@
 {
-  "name": "eslint-plugin-between",
+  "name": "@elmenov-softworks/eslint-plugin-between",
   "version": "1.0.0",
   "description": "ESLint plugin that checks inclusive TypeScript numeric ranges, arithmetic, and function contracts.",
   "keywords": [
@@ -13,12 +13,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aelmenov/typescript-between-type-plugin.git"
+    "url": "git+https://github.com/elmenov-softworks/eslint-plugin-between.git"
   },
   "bugs": {
-    "url": "https://github.com/aelmenov/typescript-between-type-plugin/issues"
+    "url": "https://github.com/elmenov-softworks/eslint-plugin-between/issues"
   },
-  "homepage": "https://github.com/aelmenov/typescript-between-type-plugin#readme",
+  "homepage": "https://github.com/elmenov-softworks/eslint-plugin-between#readme",
   "engines": {
     "node": "^20.19.0 || ^22.13.0 || >=24.0.0"
   },

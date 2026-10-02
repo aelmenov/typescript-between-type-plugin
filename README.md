@@ -12,14 +12,14 @@ opacity = 1.5; // Error: outside [0, 1]
 ## Setup
 
 ```sh
-npm install --save-dev eslint eslint-plugin-between @typescript-eslint/parser typescript
+npm install --save-dev eslint @elmenov-softworks/eslint-plugin-between @typescript-eslint/parser typescript
 ```
 
 Create `eslint.config.mjs`:
 
 ```js
 import parser from '@typescript-eslint/parser';
-import between from 'eslint-plugin-between';
+import between from '@elmenov-softworks/eslint-plugin-between';
 
 export default [
   {
@@ -35,7 +35,7 @@ Add the declarations to `tsconfig.json`, keeping any existing `types` entries:
 ```json
 {
   "compilerOptions": {
-    "types": ["eslint-plugin-between/types"]
+    "types": ["@elmenov-softworks/eslint-plugin-between/types"]
   }
 }
 ```
