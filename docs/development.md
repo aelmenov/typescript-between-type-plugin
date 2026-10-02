@@ -79,9 +79,9 @@ NodeNext. Single-line class fields can stay grouped. Traversal allows `for...of`
 and `continue`, while bitwise operators are allowed inside `src/analysis/` for
 TypeScript flags and evaluated expressions. Other Airbnb checks remain active.
 
-Run `npm ci` and `npm run build`. The build compiles the plugin before checking
-Prettier formatting, ESLint, types of tests and tool configurations, and the Jest
-suite. All TypeScript checks use strict settings. Compilation emits JavaScript
+Run `npm ci` and `npm run build` to compile the plugin. Run `npm run check` for
+compilation, formatting, lint, configuration and test type checks, and Jest.
+`npm pack` and `npm publish` run this full check through `prepack`. All TypeScript checks use strict settings. Compilation emits JavaScript
 and TypeScript declarations into `lib/`; source files remain in `src/`.
 
 Tests exercise the public ESLint API, diagnostic locations and messages, numeric

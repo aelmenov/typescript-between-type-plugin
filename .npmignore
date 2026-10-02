@@ -1,0 +1,16 @@
+node_modules/
+src/
+tests/
+scripts/
+.codex/
+.agents/
+.github/
+coverage/
+*.config.ts
+tsconfig*.json
+*.tsbuildinfo
+*.tgz
+*.log
+.editorconfig
+.gitignore
+.prettierignore

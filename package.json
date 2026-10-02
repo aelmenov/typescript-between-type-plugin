@@ -1,9 +1,55 @@
 {
   "name": "eslint-plugin-between",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "ESLint plugin that checks inclusive TypeScript numeric ranges, arithmetic, and function contracts.",
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "typescript",
+    "between",
+    "range"
+  ],
+  "author": "Alex Elmenov",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aelmenov/typescript-between-type-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aelmenov/typescript-between-type-plugin/issues"
+  },
+  "homepage": "https://github.com/aelmenov/typescript-between-type-plugin#readme",
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./types": "./lib.between.d.ts"
+  },
+  "typesVersions": {
+    "*": {
+      "types": [
+        "lib.between.d.ts"
+      ]
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "lib",
+    "lib.between.d.ts",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "compile": "node scripts/clean.mjs && tsc -p tsconfig.json",
     "compile:watch": "tsc -p tsconfig.json --watch",
@@ -14,28 +60,18 @@
     "config:typecheck": "tsc -p tsconfig.configs.json",
     "benchmark": "npm run compile && node --import tsx scripts/benchmark.ts",
     "check": "npm run compile && npm run format:check && npm run lint && npm run config:typecheck && npm run test:typecheck && npm run test:run",
-    "build": "npm run check",
-    "prepack": "npm run build",
+    "build": "npm run compile",
+    "prepack": "npm run check",
     "format": "node --import tsx node_modules/prettier/bin/prettier.cjs --write .",
     "format:check": "node --import tsx node_modules/prettier/bin/prettier.cjs --check ."
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/aelmenov/typescript-between-type-plugin.git"
+  "peerDependencies": {
+    "eslint": "^9.0.0 || ^10.0.0",
+    "typescript": ">=5.0.0 <6.1.0"
   },
-  "keywords": [
-    "eslint",
-    "eslintplugin",
-    "typescript",
-    "between",
-    "range"
-  ],
-  "author": "Alex Elmenov",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/aelmenov/typescript-between-type-plugin/issues"
+  "dependencies": {
+    "@typescript-eslint/utils": "^8.71.0"
   },
-  "homepage": "https://github.com/aelmenov/typescript-between-type-plugin#readme",
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@jest/types": "^30.5.1",
@@ -56,37 +92,5 @@
     "type-fest": "^4.41.0",
     "typescript": "~6.0.0",
     "typescript-eslint": "^8.71.0"
-  },
-  "type": "module",
-  "exports": {
-    ".": {
-      "types": "./lib/index.d.ts",
-      "import": "./lib/index.js"
-    },
-    "./types": "./lib.between.d.ts"
-  },
-  "files": [
-    "lib",
-    "lib.between.d.ts",
-    "docs",
-    "README.md",
-    "LICENSE"
-  ],
-  "engines": {
-    "node": "^20.19.0 || ^22.13.0 || >=24.0.0"
-  },
-  "peerDependencies": {
-    "eslint": "^9.0.0 || ^10.0.0",
-    "typescript": ">=5.0.0 <6.1.0"
-  },
-  "dependencies": {
-    "@typescript-eslint/utils": "^8.71.0"
-  },
-  "typesVersions": {
-    "*": {
-      "types": [
-        "lib.between.d.ts"
-      ]
-    }
   }
 }
