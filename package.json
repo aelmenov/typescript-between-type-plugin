@@ -1,6 +1,6 @@
 {
   "name": "@elmenov-softworks/eslint-plugin-between",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ESLint plugin that checks inclusive TypeScript numeric ranges, arithmetic, and function contracts.",
   "keywords": [
     "eslint",
