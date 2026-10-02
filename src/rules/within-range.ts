@@ -24,17 +24,15 @@ export default ESLintUtils.RuleCreator(
     ],
     messages: {
       outOfRange: 'Value {{value}} is outside the allowed range {{range}}.',
-      possibleOutOfRange:
-        'Value {{value}} may fall outside the allowed range {{range}}.',
-      unknownRange:
-        'Cannot prove that this value satisfies the required numeric range.',
+      possibleOutOfRange: 'Value {{value}} may fall outside the allowed range {{range}}.',
+      unknownRange: 'Cannot prove that this value satisfies the required numeric range.',
       invalidRange: 'Invalid range declaration: {{reason}}',
     },
   },
   defaultOptions: [{ unknownValues: 'error' }],
   create(context, [options]) {
     return {
-      'Program:exit'() {
+      'Program:exit': () => {
         analyze(
           context.sourceCode.text,
           context.filename,

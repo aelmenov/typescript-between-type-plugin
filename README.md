@@ -31,12 +31,17 @@ npm run build
 ```
 
 `build` checks formatting and runs lint, compilation, and tests. `compile` builds
-only the plugin; `compile:watch` rebuilds it during development. Tests use inline
-source strings; behavior examples live in [docs/range-behavior.md](docs/range-behavior.md).
+only the plugin; `compile:watch` rebuilds it during development. `npm test` compiles
+the plugin, checks the types of the tests, and runs Jest. Tests are written in
+TypeScript and grouped by behavior, with named scenarios and readable source
+examples. See [testing conventions](docs/testing.md) for the suite layout and
+commands, and [range behavior](docs/range-behavior.md) for supported examples.
 
 Compilation writes ESM JavaScript and public TypeScript declarations to `lib/`.
 The compiler uses strict typing and checks indexed access. `npm run format` formats
 source, tests, configuration, and documentation; `npm run format:check` verifies them.
+The ESLint, Jest, and Prettier configurations use TypeScript. Development linting
+uses Airbnb Extended with TypeScript rules; Prettier handles the shared format.
 Analysis separates statement traversal, expression evaluation, type resolution,
 range checking, and diagnostics. Source is grouped into `analysis/`, `ranges/`,
 and `rules/`; analysis subdirectories keep related implementations and contracts

@@ -1,7 +1,7 @@
 import ts from 'typescript';
 import { unknown } from '../domain/domain.util.js';
 import { readMember } from '../domain/member.util.js';
-import { propertyName } from '../syntax.util.js';
+import { bindingKey } from '../syntax.util.js';
 import type { Environment, Shape } from '../domain/domain.types.js';
 import type { TypeResolver } from '../type-resolver/type-resolver.service.js';
 
@@ -13,18 +13,10 @@ export function declarationShape(
   if (!declaration) return unknown;
   if (ts.isBindingElement(declaration)) {
     const pattern = declaration.parent;
-    const parent = pattern.parent;
-    const key = ts.isArrayBindingPattern(pattern)
-      ? String(pattern.elements.indexOf(declaration))
-      : declaration.propertyName
-        ? propertyName(declaration.propertyName)
-        : declaration.name.getText();
+    const { parent } = pattern;
+    const key = bindingKey(declaration);
 
-    if (
-      ts.isVariableDeclaration(parent) ||
-      ts.isParameter(parent) ||
-      ts.isBindingElement(parent)
-    )
+    if (ts.isVariableDeclaration(parent) || ts.isParameter(parent) || ts.isBindingElement(parent))
       return readMember(declarationShape(parent, types, env), key);
   }
   if (
@@ -36,8 +28,7 @@ export function declarationShape(
   ) {
     if ('type' in declaration) return types.read(declaration.type, env);
   }
-  if (ts.isGetAccessorDeclaration(declaration))
-    return types.read(declaration.type, env);
+  if (ts.isGetAccessorDeclaration(declaration)) return types.read(declaration.type, env);
   if (ts.isSetAccessorDeclaration(declaration))
     return types.read(declaration.parameters[0]?.type, env);
   if (

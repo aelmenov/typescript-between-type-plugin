@@ -1,19 +1,11 @@
 import ts from 'typescript';
 import type { AnalysisProgram } from './program.interfaces.js';
 
-export function createAnalysisProgram(
-  text: string,
-  filename: string,
-): AnalysisProgram {
+export function createAnalysisProgram(text: string, filename: string): AnalysisProgram {
   const file = ts.sys.resolvePath(
-    filename.endsWith('.ts') || filename.endsWith('.tsx')
-      ? filename
-      : `${filename}.ts`,
+    filename.endsWith('.ts') || filename.endsWith('.tsx') ? filename : `${filename}.ts`,
   );
-  const config = ts.findConfigFile(
-    file.slice(0, file.lastIndexOf('/')),
-    ts.sys.fileExists,
-  );
+  const config = ts.findConfigFile(file.slice(0, file.lastIndexOf('/')), ts.sys.fileExists);
   let options: ts.CompilerOptions = {};
 
   if (config) {

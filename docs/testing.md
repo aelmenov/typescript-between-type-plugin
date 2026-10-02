@@ -15,6 +15,7 @@ npm run test:typecheck
 ```
 
 `npm test` builds the plugin and checks the test types before running Jest.
+`npm run test:run` runs Jest against an already compiled checkout.
 `test:typecheck` checks the tests against the compiled declarations in `lib/`;
 run `npm run compile` first after a fresh checkout. In watch mode, changes to
 `src/` need a separate `npm run compile:watch` process because the tests exercise

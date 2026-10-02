@@ -32,10 +32,7 @@ export function narrowCondition(
 
   if (ts.isParenthesizedExpression(test))
     return narrowCondition(analysis, test.expression, truth, state);
-  if (
-    ts.isPrefixUnaryExpression(test) &&
-    test.operator === ts.SyntaxKind.ExclamationToken
-  )
+  if (ts.isPrefixUnaryExpression(test) && test.operator === ts.SyntaxKind.ExclamationToken)
     return narrowCondition(analysis, test.operand, !truth, state);
   if (
     ts.isCallExpression(test) &&
@@ -52,8 +49,7 @@ export function narrowCondition(
     if (argument && ts.isIdentifier(argument)) {
       const declaration = analysis.types.declaration(argument);
 
-      if (declaration)
-        state.set(declaration, number([[-Number.MAX_VALUE, Number.MAX_VALUE]]));
+      if (declaration) state.set(declaration, number([[-Number.MAX_VALUE, Number.MAX_VALUE]]));
     }
 
     return state;
@@ -64,25 +60,19 @@ export function narrowCondition(
     ts.isIdentifier(test.left.expression) &&
     ts.isStringLiteral(test.right) &&
     test.right.text === 'number' &&
-    ((test.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken &&
-      truth) ||
-      (test.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsEqualsToken &&
-        !truth))
+    ((test.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken && truth) ||
+      (test.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsEqualsToken && !truth))
   ) {
     const declaration = analysis.types.declaration(test.left.expression);
 
-    if (declaration)
-      state.set(declaration, number([[-Infinity, Infinity]], true));
+    if (declaration) state.set(declaration, number([[-Infinity, Infinity]], true));
 
     return state;
   }
 
   const token = test.operatorToken.kind;
 
-  if (
-    token === ts.SyntaxKind.AmpersandAmpersandToken ||
-    token === ts.SyntaxKind.BarBarToken
-  ) {
+  if (token === ts.SyntaxKind.AmpersandAmpersandToken || token === ts.SyntaxKind.BarBarToken) {
     const and = token === ts.SyntaxKind.AmpersandAmpersandToken;
 
     if (truth === and)
@@ -106,9 +96,9 @@ export function narrowCondition(
     return state;
   }
 
-  let identifier = test.left,
-    bound = test.right,
-    operator = test.operatorToken.getText();
+  let identifier = test.left;
+  let bound = test.right;
+  let operator = test.operatorToken.getText();
 
   if (!ts.isIdentifier(identifier) && ts.isIdentifier(bound)) {
     [identifier, bound] = [bound, identifier];
@@ -121,9 +111,7 @@ export function narrowCondition(
   const currentValue = analysis.value(identifier, state);
   const declaredNumeric =
     analysis.declared(declaration).kind === 'number' ||
-    (analysis.types.checker.getTypeAtLocation(identifier).flags &
-      ts.TypeFlags.NumberLike) !==
-      0;
+    (analysis.types.checker.getTypeAtLocation(identifier).flags & ts.TypeFlags.NumberLike) !== 0;
 
   if (currentValue.kind !== 'number' && !declaredNumeric) return state;
   if (
@@ -140,19 +128,18 @@ export function narrowCondition(
   if (point === undefined || Number.isNaN(point)) return state;
   if (!truth) operator = negatedComparisons[operator] ?? '';
 
-  let low = -Infinity,
-    high = Infinity;
+  let low = -Infinity;
+  let high = Infinity;
 
   if (operator === '<' || operator === '<=') high = point;
   else if (operator === '>' || operator === '>=') low = point;
-  else if (operator === '===') low = high = point;
-  else return state;
+  else if (operator === '===') {
+    low = point;
+    high = point;
+  } else return state;
 
   const current = analysis.value(identifier, state);
-  const ranges =
-    current.kind === 'number'
-      ? current.ranges
-      : [[-Infinity, Infinity] as const];
+  const ranges = current.kind === 'number' ? current.ranges : [[-Infinity, Infinity] as const];
   // False ordered comparisons may include NaN. Keep it until a positive comparison excludes it.
   const nan =
     !truth &&

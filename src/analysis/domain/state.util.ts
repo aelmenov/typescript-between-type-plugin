@@ -5,18 +5,10 @@ import type { State } from '../analyzer/analyzer.types.js';
 import type { FlowAnalysis } from '../flow/flow.interfaces.js';
 
 export function isImmutable(declaration: ts.Declaration): boolean {
-  return (
-    ts.isVariableDeclaration(declaration) &&
-    !!(declaration.parent.flags & ts.NodeFlags.Const)
-  );
+  return ts.isVariableDeclaration(declaration) && !!(declaration.parent.flags & ts.NodeFlags.Const);
 }
 
-export function mergeStates(
-  analysis: FlowAnalysis,
-  target: State,
-  a: State,
-  b: State,
-): void {
+export function mergeStates(analysis: FlowAnalysis, target: State, a: State, b: State): void {
   const entries = new Map<ts.Declaration, Shape>();
 
   for (const declaration of new Set([...a.keys(), ...b.keys()]))

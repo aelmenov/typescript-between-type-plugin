@@ -3,25 +3,15 @@ import { join, unknown } from '../domain/domain.util.js';
 import { readMember } from '../domain/member.util.js';
 import { narrowCondition } from '../flow/narrowing.util.js';
 import { isImmutable, mergeStates } from '../domain/state.util.js';
-import { propertyName } from '../syntax.util.js';
+import { bindingKey } from '../syntax.util.js';
 import { createAnalysisProgram } from '../program/program.factory.js';
 import { Diagnostics } from '../validation/diagnostics.service.js';
 import { ExpressionEvaluator } from '../evaluator/expression-evaluator.service.js';
 import { RangeChecker } from '../validation/range-checker.service.js';
 import { TypeResolver } from '../type-resolver/type-resolver.service.js';
+import { bindTypeParameters } from '../type-resolver/bindings.util.js';
 import type { Environment, Shape } from '../domain/domain.types.js';
 import type { Report, State, UnknownValues } from './analyzer.types.js';
-
-export function analyze(
-  text: string,
-  filename: string,
-  report: Report,
-  unknownValues: UnknownValues,
-): void {
-  const { source, checker } = createAnalysisProgram(text, filename);
-
-  new Analyzer(source, checker, report, unknownValues).run();
-}
 
 class Analyzer {
   private readonly types: TypeResolver;
@@ -46,18 +36,14 @@ class Analyzer {
     this.types = new TypeResolver(checker, (node, reason) =>
       diagnostics.emit(node, 'invalidRange', { reason }),
     );
-    this.ranges = new RangeChecker(
-      this.types,
-      diagnostics,
-      (node, outer, contextual) =>
-        this.analyzeFunction(node, outer, contextual),
+    this.ranges = new RangeChecker(this.types, diagnostics, (node, outer, contextual) =>
+      this.analyzeFunction(node, outer, contextual),
     );
     this.expressions = new ExpressionEvaluator(
       this.types,
       () => this.env,
       (target, value, node) => this.ranges.check(target, value, node),
-      (node, outer, contextual) =>
-        this.analyzeFunction(node, outer, contextual),
+      (node, outer, contextual) => this.analyzeFunction(node, outer, contextual),
     );
   }
 
@@ -77,24 +63,16 @@ class Analyzer {
       return;
     }
 
-    name.elements.forEach((element, index) => {
+    name.elements.forEach((element) => {
       if (ts.isOmittedExpression(element)) return;
 
-      const key = ts.isArrayBindingPattern(name)
-        ? String(index)
-        : element.propertyName
-          ? propertyName(element.propertyName)
-          : element.name.getText();
+      const key = bindingKey(element);
       let item = readMember(value, key);
 
       if (element.initializer) {
         const fallback = this.expressions.value(element.initializer, state);
 
-        this.ranges.check(
-          readMember(target, key),
-          fallback,
-          element.initializer,
-        );
+        this.ranges.check(readMember(target, key), fallback, element.initializer);
         item = join(item, fallback);
       }
 
@@ -112,18 +90,15 @@ class Analyzer {
 
     this.analyzedFunctions.add(node);
 
-    const previousReturn = this.returns,
-      previousEnv = this.env,
-      previousCaptured = this.returnValues;
+    const previousReturn = this.returns;
+    const previousEnv = this.env;
+    const previousCaptured = this.returnValues;
 
     this.returnValues = [];
-    this.env = this.types.bind(node.typeParameters, undefined, this.env);
+    this.env = bindTypeParameters(node.typeParameters, undefined, this.env);
     this.returns = this.types.read(node.type, this.env);
     if (!node.type && contextual)
-      this.returns = this.types.read(
-        contextual.declaration.type,
-        contextual.env,
-      );
+      this.returns = this.types.read(contextual.declaration.type, contextual.env);
 
     const state = new Map<ts.Declaration, Shape>();
 
@@ -136,14 +111,11 @@ class Analyzer {
       );
 
     for (const [index, parameter] of node.parameters.entries()) {
-      const shape = parameter.type
-        ? this.types.read(parameter.type, this.env)
-        : contextual
-          ? this.types.read(
-              contextual.declaration.parameters[index]?.type,
-              contextual.env,
-            )
-          : unknown;
+      let shape: Shape = unknown;
+
+      if (parameter.type) shape = this.types.read(parameter.type, this.env);
+      else if (contextual)
+        shape = this.types.read(contextual.declaration.parameters[index]?.type, contextual.env);
 
       if (parameter.initializer)
         this.ranges.check(
@@ -152,13 +124,7 @@ class Analyzer {
           parameter.initializer,
         );
 
-      this.bind(
-        parameter.name,
-        shape.kind === 'any' ? unknown : shape,
-        shape,
-        state,
-        parameter,
-      );
+      this.bind(parameter.name, shape.kind === 'any' ? unknown : shape, shape, state, parameter);
     }
 
     if (ts.isBlock(node.body)) {
@@ -177,10 +143,7 @@ class Analyzer {
       this.ranges.check(this.returns, value, node.body);
     }
 
-    const inferredReturn = this.returnValues.reduce(
-      join,
-      this.returnValues[0] ?? unknown,
-    );
+    const inferredReturn = this.returnValues.reduce(join, this.returnValues[0] ?? unknown);
 
     this.inferredReturns.set(node, inferredReturn);
     this.returns = previousReturn;
@@ -190,12 +153,8 @@ class Analyzer {
     return inferredReturn;
   }
 
-  private statements(
-    statements: readonly ts.Statement[],
-    state: State,
-  ): boolean {
-    for (const statement of statements)
-      if (!this.statement(statement, state)) return false;
+  private statements(statements: readonly ts.Statement[], state: State): boolean {
+    for (const statement of statements) if (!this.statement(statement, state)) return false;
 
     return true;
   }
@@ -210,17 +169,13 @@ class Analyzer {
           ? this.expressions.value(declaration.initializer, state)
           : unknown;
 
-        if (declaration.initializer)
-          this.ranges.check(target, value, declaration.initializer);
+        if (declaration.initializer) this.ranges.check(target, value, declaration.initializer);
 
         this.bind(declaration.name, value, target, state, declaration);
       }
-    } else if (ts.isExpressionStatement(node))
-      this.expressions.value(node.expression, state);
+    } else if (ts.isExpressionStatement(node)) this.expressions.value(node.expression, state);
     else if (ts.isReturnStatement(node)) {
-      const value = node.expression
-        ? this.expressions.value(node.expression, state)
-        : unknown;
+      const value = node.expression ? this.expressions.value(node.expression, state) : unknown;
 
       this.returnValues.push(value);
       this.ranges.check(this.returns, value, node.expression ?? node);
@@ -233,17 +188,10 @@ class Analyzer {
     } else if (ts.isIfStatement(node)) {
       this.expressions.value(node.expression, state);
 
-      const yes = narrowCondition(
-          this.expressions,
-          node.expression,
-          true,
-          state,
-        ),
-        no = narrowCondition(this.expressions, node.expression, false, state);
-      const yesAlive = this.statement(node.thenStatement, yes),
-        noAlive = node.elseStatement
-          ? this.statement(node.elseStatement, no)
-          : true;
+      const yes = narrowCondition(this.expressions, node.expression, true, state);
+      const no = narrowCondition(this.expressions, node.expression, false, state);
+      const yesAlive = this.statement(node.thenStatement, yes);
+      const noAlive = node.elseStatement ? this.statement(node.elseStatement, no) : true;
 
       if (yesAlive && noAlive) mergeStates(this.expressions, state, yes, no);
       else if (yesAlive || noAlive) {
@@ -253,14 +201,13 @@ class Analyzer {
       }
 
       return yesAlive || noAlive;
-    } else if (ts.isFunctionDeclaration(node))
-      this.analyzeFunction(node, state);
+    } else if (ts.isFunctionDeclaration(node)) this.analyzeFunction(node, state);
     else if (ts.isTypeAliasDeclaration(node)) {
       if (!node.typeParameters?.length) this.types.read(node.type, this.env);
     } else if (ts.isInterfaceDeclaration(node))
       this.types.members(
         node.members,
-        this.types.bind(node.typeParameters, undefined, this.env),
+        bindTypeParameters(node.typeParameters, undefined, this.env),
       );
     else if (ts.isClassDeclaration(node)) {
       for (const member of node.members) {
@@ -319,19 +266,16 @@ class Analyzer {
         if (!isImmutable(declaration))
           state.set(declaration, this.expressions.declared(declaration));
 
-      const condition = ts.isForStatement(node)
-        ? node.condition
-        : ts.isWhileStatement(node) || ts.isDoStatement(node)
-          ? node.expression
-          : undefined;
+      let condition: ts.Expression | undefined;
+
+      if (ts.isForStatement(node)) condition = node.condition;
+      else if (ts.isWhileStatement(node) || ts.isDoStatement(node)) condition = node.expression;
+
       const body = condition
         ? narrowCondition(this.expressions, condition, true, state)
         : new Map(state);
 
-      if (
-        ts.isForOfStatement(node) &&
-        ts.isVariableDeclarationList(node.initializer)
-      ) {
+      if (ts.isForOfStatement(node) && ts.isVariableDeclarationList(node.initializer)) {
         const collection = this.expressions.value(node.expression, state);
 
         for (const declaration of node.initializer.declarations)
@@ -364,4 +308,15 @@ class Analyzer {
 
     return true;
   }
+}
+
+export function analyze(
+  text: string,
+  filename: string,
+  report: Report,
+  unknownValues: UnknownValues,
+): void {
+  const { source, checker } = createAnalysisProgram(text, filename);
+
+  new Analyzer(source, checker, report, unknownValues).run();
 }

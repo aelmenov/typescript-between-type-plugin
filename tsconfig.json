@@ -6,6 +6,7 @@
     "rootDir": "src",
     "outDir": "lib",
     "declaration": true,
+    "types": ["node"],
     "strict": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,

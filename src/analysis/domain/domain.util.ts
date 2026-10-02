@@ -12,10 +12,7 @@ export function number(ranges: Range[], nan = false): Shape {
 }
 
 export function literal(value: number): Shape {
-  return number(
-    Number.isNaN(value) ? [] : [[value, value]],
-    Number.isNaN(value),
-  );
+  return number(Number.isNaN(value) ? [] : [[value, value]], Number.isNaN(value));
 }
 
 export function join(a: Shape, b: Shape): Shape {
@@ -114,9 +111,7 @@ export function arithmetic(operator: string, left: Shape, right: Shape): Shape {
         continue;
       }
       if (['&', '|', '^', '<<', '>>', '>>>'].includes(operator)) {
-        result.push(
-          operator === '>>>' ? [0, 4294967295] : [-2147483648, 2147483647],
-        );
+        result.push(operator === '>>>' ? [0, 4294967295] : [-2147483648, 2147483647]);
         continue;
       }
       if (operator === '/' && c <= 0 && d >= 0) return unknown;
@@ -128,17 +123,11 @@ export function arithmetic(operator: string, left: Shape, right: Shape): Shape {
         result.push([a < 0 ? -bound : 0, b > 0 ? bound : 0]);
         continue;
       }
-      if (operator === '**' && (c !== d || !Number.isInteger(c)))
-        return unknown;
+      if (operator === '**' && (c !== d || !Number.isInteger(c))) return unknown;
       if (operator === '**' && c < 0 && a <= 0 && b >= 0) return unknown;
       if (!['+', '-', '*', '/', '**'].includes(operator)) return unknown;
 
-      const points = [
-        evaluate(a, c),
-        evaluate(a, d),
-        evaluate(b, c),
-        evaluate(b, d),
-      ];
+      const points = [evaluate(a, c), evaluate(a, d), evaluate(b, c), evaluate(b, d)];
 
       if (operator === '**' && a <= 0 && b >= 0) points.push(evaluate(0, c));
       if (
@@ -151,8 +140,7 @@ export function arithmetic(operator: string, left: Shape, right: Shape): Shape {
 
       const finite = points.filter((value) => !Number.isNaN(value));
 
-      if (finite.length)
-        result.push([Math.min(...finite), Math.max(...finite)]);
+      if (finite.length) result.push([Math.min(...finite), Math.max(...finite)]);
     }
 
   return number(result, nan);

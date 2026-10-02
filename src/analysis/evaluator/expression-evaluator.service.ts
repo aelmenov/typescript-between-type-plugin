@@ -4,17 +4,10 @@ import { declarationShape } from './declaration.mapper.js';
 import { readMember } from '../domain/member.util.js';
 import { narrowCondition } from '../flow/narrowing.util.js';
 import { isImmutable, mergeStates } from '../domain/state.util.js';
-import {
-  accessKey,
-  isFunctionImplementation,
-  propertyName,
-} from '../syntax.util.js';
+import { accessKey, isFunctionImplementation, propertyName } from '../syntax.util.js';
+import { bindTypeParameters } from '../type-resolver/bindings.util.js';
 import type { Environment, Shape } from '../domain/domain.types.js';
-import type {
-  AnalyzeFunction,
-  CheckRange,
-  State,
-} from '../analyzer/analyzer.types.js';
+import type { AnalyzeFunction, CheckRange, State } from '../analyzer/analyzer.types.js';
 import type { FlowAnalysis } from '../flow/flow.interfaces.js';
 import type { TypeResolver } from '../type-resolver/type-resolver.service.js';
 
@@ -49,20 +42,13 @@ export class ExpressionEvaluator implements FlowAnalysis {
   }
 
   private target(node: ts.Expression): Shape {
-    if (ts.isIdentifier(node))
-      return this.declared(this.types.declaration(node));
-    if (node.kind === ts.SyntaxKind.ThisKeyword)
-      return this.value(node, new Map());
-    if (
-      ts.isPropertyAccessExpression(node) ||
-      ts.isElementAccessExpression(node)
-    ) {
+    if (ts.isIdentifier(node)) return this.declared(this.types.declaration(node));
+    if (node.kind === ts.SyntaxKind.ThisKeyword) return this.value(node, new Map());
+    if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
       const object = this.target(node.expression);
       const member = readMember(object, accessKey(node));
 
-      return member.kind === 'unknown'
-        ? this.declared(this.types.declaration(node))
-        : member;
+      return member.kind === 'unknown' ? this.declared(this.types.declaration(node)) : member;
     }
 
     return unknown;
@@ -72,13 +58,9 @@ export class ExpressionEvaluator implements FlowAnalysis {
     if (ts.isNumericLiteral(node)) return literal(Number(node.text));
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node))
       return { kind: 'other', tag: 'string' };
-    if (
-      node.kind === ts.SyntaxKind.TrueKeyword ||
-      node.kind === ts.SyntaxKind.FalseKeyword
-    )
+    if (node.kind === ts.SyntaxKind.TrueKeyword || node.kind === ts.SyntaxKind.FalseKeyword)
       return { kind: 'other', tag: 'boolean' };
-    if (node.kind === ts.SyntaxKind.NullKeyword)
-      return { kind: 'other', tag: 'null' };
+    if (node.kind === ts.SyntaxKind.NullKeyword) return { kind: 'other', tag: 'null' };
     if (
       ts.isParenthesizedExpression(node) ||
       ts.isNonNullExpression(node) ||
@@ -99,23 +81,20 @@ export class ExpressionEvaluator implements FlowAnalysis {
     if (ts.isIdentifier(node)) {
       const declaration = this.types.declaration(node);
 
-      if (!declaration && node.text === 'undefined')
-        return { kind: 'other', tag: 'undefined' };
-      if (!declaration)
-        return node.text === 'Infinity'
-          ? literal(Infinity)
-          : node.text === 'NaN'
-            ? literal(NaN)
-            : unknown;
+      if (!declaration) {
+        if (node.text === 'undefined') return { kind: 'other', tag: 'undefined' };
+        if (node.text === 'Infinity') return literal(Infinity);
+        if (node.text === 'NaN') return literal(NaN);
+
+        return unknown;
+      }
 
       const stored = state.get(declaration);
 
       if (stored) {
         const contract = this.declared(declaration);
 
-        return stored.kind === 'function' && contract.kind === 'function'
-          ? contract
-          : stored;
+        return stored.kind === 'function' && contract.kind === 'function' ? contract : stored;
       }
       if (
         ts.isVariableDeclaration(declaration) &&
@@ -136,10 +115,7 @@ export class ExpressionEvaluator implements FlowAnalysis {
 
       for (const property of node.properties) {
         if (ts.isPropertyAssignment(property))
-          properties.set(
-            propertyName(property.name),
-            this.value(property.initializer, state),
-          );
+          properties.set(propertyName(property.name), this.value(property.initializer, state));
         if (ts.isShorthandPropertyAssignment(property))
           properties.set(property.name.text, this.value(property.name, state));
         if (ts.isMethodDeclaration(property)) {
@@ -168,16 +144,10 @@ export class ExpressionEvaluator implements FlowAnalysis {
         if (ts.isSpreadElement(element)) {
           const spread = this.value(element.expression, state);
 
-          if (spread.kind !== 'array' || !spread.items)
-            return { kind: 'array', element: unknown };
+          if (spread.kind !== 'array' || !spread.items) return { kind: 'array', element: unknown };
 
           items.push(...spread.items);
-        } else
-          items.push(
-            ts.isOmittedExpression(element)
-              ? unknown
-              : this.value(element, state),
-          );
+        } else items.push(ts.isOmittedExpression(element) ? unknown : this.value(element, state));
       }
 
       return {
@@ -187,49 +157,30 @@ export class ExpressionEvaluator implements FlowAnalysis {
       };
     }
     if (node.kind === ts.SyntaxKind.ThisKeyword) {
-      for (
-        let parent: ts.Node | undefined = node.parent;
-        parent;
-        parent = parent.parent
-      ) {
-        if (ts.isClassDeclaration(parent))
-          return this.types.members(parent.members, this.env);
+      for (let parent: ts.Node | undefined = node.parent; parent; parent = parent.parent) {
+        if (ts.isClassDeclaration(parent)) return this.types.members(parent.members, this.env);
       }
 
       return unknown;
     }
-    if (
-      ts.isPropertyAccessExpression(node) ||
-      ts.isElementAccessExpression(node)
-    ) {
-      const member = readMember(
-        this.value(node.expression, state),
-        accessKey(node),
-      );
+    if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
+      const member = readMember(this.value(node.expression, state), accessKey(node));
       let root = node.expression;
 
-      while (
-        ts.isPropertyAccessExpression(root) ||
-        ts.isElementAccessExpression(root)
-      )
+      while (ts.isPropertyAccessExpression(root) || ts.isElementAccessExpression(root))
         root = root.expression;
 
       const declaration = this.types.declaration(root);
 
       if (declaration && state.has(declaration)) return member;
 
-      return member.kind === 'unknown'
-        ? this.declared(this.types.declaration(node))
-        : member;
+      return member.kind === 'unknown' ? this.declared(this.types.declaration(node)) : member;
     }
     if (ts.isConditionalExpression(node)) {
       this.value(node.condition, state);
-      const yes = narrowCondition(this, node.condition, true, state),
-        no = narrowCondition(this, node.condition, false, state);
-      const result = join(
-        this.value(node.whenTrue, yes),
-        this.value(node.whenFalse, no),
-      );
+      const yes = narrowCondition(this, node.condition, true, state);
+      const no = narrowCondition(this, node.condition, false, state);
+      const result = join(this.value(node.whenTrue, yes), this.value(node.whenFalse, no));
 
       mergeStates(this, state, yes, no);
 
@@ -253,10 +204,8 @@ export class ExpressionEvaluator implements FlowAnalysis {
         return ts.isPostfixUnaryExpression(node) ? operand : next;
       }
       if (node.operator === ts.SyntaxKind.PlusToken) return operand;
-      if (node.operator === ts.SyntaxKind.MinusToken)
-        return arithmetic('*', literal(-1), operand);
-      if (node.operator === ts.SyntaxKind.TildeToken)
-        return arithmetic('^', operand, literal(-1));
+      if (node.operator === ts.SyntaxKind.MinusToken) return arithmetic('*', literal(-1), operand);
+      if (node.operator === ts.SyntaxKind.TildeToken) return arithmetic('^', operand, literal(-1));
 
       return unknown;
     }
@@ -304,8 +253,8 @@ export class ExpressionEvaluator implements FlowAnalysis {
         return unknown;
       }
 
-      const left = this.value(node.left, state),
-        right = this.value(node.right, state);
+      const left = this.value(node.left, state);
+      const right = this.value(node.right, state);
 
       if (op === ts.SyntaxKind.CommaToken) return right;
       if (
@@ -328,14 +277,8 @@ export class ExpressionEvaluator implements FlowAnalysis {
       const declaration = this.types.declaration(node.expression);
 
       if (declaration && ts.isClassDeclaration(declaration)) {
-        const env = this.types.bind(
-          declaration.typeParameters,
-          node.typeArguments,
-          this.env,
-        );
-        const constructor = declaration.members.find(
-          ts.isConstructorDeclaration,
-        );
+        const env = bindTypeParameters(declaration.typeParameters, node.typeArguments, this.env);
+        const constructor = declaration.members.find(ts.isConstructorDeclaration);
 
         node.arguments?.forEach((argument, index) =>
           this.check(
@@ -356,16 +299,13 @@ export class ExpressionEvaluator implements FlowAnalysis {
         if (ts.isSpreadElement(argument)) {
           const spread = this.value(argument.expression, state);
 
-          if (spread.kind === 'array' && spread.items)
-            args.push(...spread.items);
+          if (spread.kind === 'array' && spread.items) args.push(...spread.items);
           else args.push(unknown);
         } else args.push(this.value(argument, state));
       }
       if (
         ts.isPropertyAccessExpression(node.expression) &&
-        ['push', 'unshift', 'splice', 'fill'].includes(
-          node.expression.name.text,
-        )
+        ['push', 'unshift', 'splice', 'fill'].includes(node.expression.name.text)
       ) {
         const array = this.target(node.expression.expression);
 
@@ -376,11 +316,7 @@ export class ExpressionEvaluator implements FlowAnalysis {
           args
             .slice(start, end)
             .forEach((value, index) =>
-              this.check(
-                array.element,
-                value,
-                node.arguments?.[start + index] ?? node,
-              ),
+              this.check(array.element, value, node.arguments?.[start + index] ?? node),
             );
         }
       }
@@ -388,11 +324,7 @@ export class ExpressionEvaluator implements FlowAnalysis {
       let result: Shape = unknown;
 
       if (fn.kind === 'function') {
-        const env = this.types.bind(
-          fn.declaration.typeParameters,
-          node.typeArguments,
-          fn.env,
-        );
+        const env = bindTypeParameters(fn.declaration.typeParameters, node.typeArguments, fn.env);
 
         fn.declaration.parameters.forEach((parameter, index) => {
           const target = this.types.read(parameter.type, env);
@@ -401,18 +333,10 @@ export class ExpressionEvaluator implements FlowAnalysis {
             args
               .slice(index)
               .forEach((value, offset) =>
-                this.check(
-                  target.element,
-                  value,
-                  node.arguments?.[index + offset] ?? node,
-                ),
+                this.check(target.element, value, node.arguments?.[index + offset] ?? node),
               );
           else if (index < args.length)
-            this.check(
-              target,
-              args[index] ?? unknown,
-              node.arguments?.[index] ?? node,
-            );
+            this.check(target, args[index] ?? unknown, node.arguments?.[index] ?? node);
         });
         result = this.types.read(fn.declaration.type, env);
         if (!fn.declaration.type && isFunctionImplementation(fn.declaration)) {
@@ -438,21 +362,11 @@ export class ExpressionEvaluator implements FlowAnalysis {
     return unknown;
   }
 
-  private assign(
-    node: ts.Expression,
-    value: Shape,
-    location: ts.Node,
-    state: State,
-  ) {
+  private assign(node: ts.Expression, value: Shape, location: ts.Node, state: State) {
     if (ts.isArrayLiteralExpression(node)) {
       node.elements.forEach((element, index) => {
         if (!ts.isOmittedExpression(element))
-          this.assign(
-            element,
-            readMember(value, String(index)),
-            location,
-            state,
-          );
+          this.assign(element, readMember(value, String(index)), location, state);
       });
 
       return;
@@ -460,12 +374,7 @@ export class ExpressionEvaluator implements FlowAnalysis {
     if (ts.isObjectLiteralExpression(node)) {
       for (const property of node.properties) {
         if (ts.isShorthandPropertyAssignment(property))
-          this.assign(
-            property.name,
-            readMember(value, property.name.text),
-            location,
-            state,
-          );
+          this.assign(property.name, readMember(value, property.name.text), location, state);
         if (ts.isPropertyAssignment(property))
           this.assign(
             property.initializer,
@@ -488,13 +397,9 @@ export class ExpressionEvaluator implements FlowAnalysis {
       const declaration = this.types.declaration(node);
 
       if (declaration) state.set(declaration, value);
-    } else if (
-      ts.isPropertyAccessExpression(node) ||
-      ts.isElementAccessExpression(node)
-    ) {
+    } else if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
       for (const [key, item] of state)
-        if (item.kind === 'object' || item.kind === 'array')
-          state.set(key, unknown);
+        if (item.kind === 'object' || item.kind === 'array') state.set(key, unknown);
     }
   }
 }
