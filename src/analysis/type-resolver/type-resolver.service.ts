@@ -4,11 +4,20 @@ import { getBuiltinRange } from '../../ranges/builtin-ranges.util.js';
 import { invalid, literal, number, unknown, unrestricted } from '../domain/domain.util.js';
 import type { Binding, Environment, Shape } from '../domain/domain.types.js';
 import type { Problem } from './type-resolver.types.js';
+import type { Resolution } from './type-resolver.interfaces.js';
 import { bindTypeParameters } from './bindings.util.js';
 
 export class TypeResolver {
   private readonly active = new Set<ts.Node>();
+  private readonly resolutions = new WeakMap<Environment, WeakMap<ts.TypeNode, Resolution>>();
+  private readonly valueDeclarations = new WeakMap<ts.Node, ts.Declaration | undefined>();
+  private readonly typeDeclarations = new WeakMap<ts.Node, ts.Declaration | undefined>();
+
   private origin: ts.Node | undefined;
+  private failures = 0;
+  private peakDepth = 0;
+  private rootEnvironment: Environment | undefined;
+  private foreignEnvironments = 0;
 
   constructor(
     readonly checker: ts.TypeChecker,
@@ -16,24 +25,38 @@ export class TypeResolver {
   ) {}
 
   declaration(node: ts.Node, typeOnly = false): ts.Declaration | undefined {
+    const declarations = typeOnly ? this.typeDeclarations : this.valueDeclarations;
+
+    if (declarations.has(node)) return declarations.get(node);
+
     let symbol = this.checker.getSymbolAtLocation(node);
 
     if (symbol && symbol.flags & ts.SymbolFlags.Alias) {
       const original = symbol;
 
       symbol = this.checker.getAliasedSymbol(symbol);
-      if (!symbol.declarations?.length) return original.declarations?.[0];
+      if (!symbol.declarations?.length) {
+        const declaration = original.declarations?.[0];
+
+        declarations.set(node, declaration);
+
+        return declaration;
+      }
     }
 
-    return typeOnly
+    const declaration = typeOnly
       ? (symbol?.declarations?.find(
-          (declaration) =>
-            ts.isTypeAliasDeclaration(declaration) ||
-            ts.isInterfaceDeclaration(declaration) ||
-            ts.isClassDeclaration(declaration) ||
-            ts.isTypeParameterDeclaration(declaration),
+          (candidate) =>
+            ts.isTypeAliasDeclaration(candidate) ||
+            ts.isInterfaceDeclaration(candidate) ||
+            ts.isClassDeclaration(candidate) ||
+            ts.isTypeParameterDeclaration(candidate),
         ) ?? symbol?.declarations?.[0])
       : (symbol?.valueDeclaration ?? symbol?.declarations?.[0]);
+
+    declarations.set(node, declaration);
+
+    return declaration;
   }
 
   binding(binding: Binding): Shape {
@@ -49,12 +72,48 @@ export class TypeResolver {
       return invalid;
     }
 
+    let resolutions = this.resolutions.get(env);
+    const cached = resolutions?.get(node);
+    const { size: depth } = this.active;
+    const { failures, peakDepth: previousPeak, rootEnvironment } = this;
+    const consistentEnvironment =
+      rootEnvironment === undefined || (rootEnvironment === env && this.foreignEnvironments === 0);
+
+    // Preserve recursion guards across binding environments and cached subtree depths.
+    if (cached && consistentEnvironment && depth + cached.depth <= 101) {
+      this.peakDepth = Math.max(this.peakDepth, depth + cached.depth);
+
+      return cached.shape;
+    }
+
     this.active.add(node);
+    this.peakDepth = depth + 1;
+
+    if (rootEnvironment === undefined) this.rootEnvironment = env;
+    else if (rootEnvironment !== env) this.foreignEnvironments += 1;
 
     try {
-      return this.resolve(node, env);
+      const shape = this.resolve(node, env);
+
+      if (this.failures === failures) {
+        if (!resolutions) {
+          resolutions = new WeakMap();
+          this.resolutions.set(env, resolutions);
+        }
+
+        resolutions.set(node, {
+          shape,
+          depth: this.peakDepth - depth,
+        });
+      }
+
+      return shape;
     } finally {
       this.active.delete(node);
+      this.peakDepth = Math.max(previousPeak, this.peakDepth);
+
+      if (rootEnvironment === undefined) this.rootEnvironment = undefined;
+      else if (rootEnvironment !== env) this.foreignEnvironments -= 1;
     }
   }
 
@@ -98,6 +157,7 @@ export class TypeResolver {
   }
 
   private fail(node: ts.Node, reason: string): void {
+    this.failures += 1;
     this.problem(
       node.getSourceFile() === this.origin?.getSourceFile() ? node : (this.origin ?? node),
       reason,
@@ -284,7 +344,11 @@ export class TypeResolver {
     ) {
       const next = bindTypeParameters(declaration.typeParameters, node.typeArguments, env);
 
-      if (this.active.has(declaration)) return unknown;
+      if (this.active.has(declaration)) {
+        this.failures += 1;
+
+        return unknown;
+      }
 
       this.active.add(declaration);
       try {
@@ -293,6 +357,8 @@ export class TypeResolver {
         for (const clause of declaration.heritageClauses ?? [])
           for (const base of clause.types) {
             const parent = this.declaration(base.expression);
+
+            if (parent && this.active.has(parent)) this.failures += 1;
 
             if (parent && ts.isInterfaceDeclaration(parent) && !this.active.has(parent)) {
               this.active.add(parent);

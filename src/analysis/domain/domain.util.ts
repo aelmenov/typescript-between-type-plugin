@@ -17,50 +17,33 @@ export function literal(value: number): Shape {
 
 export function join(a: Shape, b: Shape): Shape {
   if (a.kind === 'number' && b.kind === 'number') {
-    const ranges = [...a.ranges, ...b.ranges];
+    if (a.ranges.length + b.ranges.length <= 32)
+      return number([...a.ranges, ...b.ranges], a.nan || b.nan);
 
-    return number(
-      ranges.length > 32
-        ? [
-            [
-              Math.min(...ranges.map((range) => range[0])),
-              Math.max(...ranges.map((range) => range[1])),
-            ],
-          ]
-        : ranges,
-      a.nan || b.nan,
-    );
+    let min = Infinity;
+    let max = -Infinity;
+
+    for (const ranges of [a.ranges, b.ranges])
+      for (const [start, end] of ranges) {
+        min = Math.min(min, start);
+        max = Math.max(max, end);
+      }
+
+    return number([[min, max]], a.nan || b.nan);
   }
   if (a.kind === 'other' && b.kind === 'other' && a.tag === b.tag) return a;
   if (a.kind === 'object' && b.kind === 'object') {
-    return {
-      kind: 'object',
-      properties: new Map(
-        [...a.properties].map(([key, value]) => [
-          key,
-          join(value, b.properties.get(key) ?? unknown),
-        ]),
-      ),
-    };
+    const properties = new Map<string, Shape>();
+
+    for (const [key, value] of a.properties)
+      properties.set(key, join(value, b.properties.get(key) ?? unknown));
+
+    return { kind: 'object', properties };
   }
   if (a.kind === 'array' && b.kind === 'array')
     return { kind: 'array', element: join(a.element, b.element) };
 
   return unknown;
-}
-
-export function covered(source: Range, targets: Range[]): boolean {
-  let start = source[0];
-
-  for (const [min, max] of [...targets].sort((a, b) => a[0] - b[0])) {
-    if (max < start) continue;
-    if (min > start) return false;
-    if (max >= source[1]) return true;
-
-    start = max;
-  }
-
-  return false;
 }
 
 export function arithmetic(operator: string, left: Shape, right: Shape): Shape {

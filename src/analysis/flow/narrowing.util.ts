@@ -22,18 +22,10 @@ const negatedComparisons: Readonly<Record<string, string>> = {
   '!==': '===',
 };
 
-export function narrowCondition(
-  analysis: FlowAnalysis,
-  test: ts.Expression,
-  truth: boolean,
-  original: State,
-): State {
-  const state = new Map(original);
-
-  if (ts.isParenthesizedExpression(test))
-    return narrowCondition(analysis, test.expression, truth, state);
+function narrow(analysis: FlowAnalysis, test: ts.Expression, truth: boolean, state: State): State {
+  if (ts.isParenthesizedExpression(test)) return narrow(analysis, test.expression, truth, state);
   if (ts.isPrefixUnaryExpression(test) && test.operator === ts.SyntaxKind.ExclamationToken)
-    return narrowCondition(analysis, test.operand, !truth, state);
+    return narrow(analysis, test.operand, !truth, state);
   if (
     ts.isCallExpression(test) &&
     ts.isPropertyAccessExpression(test.expression) &&
@@ -76,19 +68,14 @@ export function narrowCondition(
     const and = token === ts.SyntaxKind.AmpersandAmpersandToken;
 
     if (truth === and)
-      return narrowCondition(
-        analysis,
-        test.right,
-        truth,
-        narrowCondition(analysis, test.left, truth, state),
-      );
+      return narrow(analysis, test.right, truth, narrow(analysis, test.left, truth, state));
 
-    const left = narrowCondition(analysis, test.left, truth, state);
-    const right = narrowCondition(
+    const left = narrow(analysis, test.left, truth, new Map(state));
+    const right = narrow(
       analysis,
       test.right,
       truth,
-      narrowCondition(analysis, test.left, !truth, state),
+      narrow(analysis, test.left, !truth, new Map(state)),
     );
 
     mergeStates(analysis, state, left, right);
@@ -157,4 +144,13 @@ export function narrowCondition(
   );
 
   return state;
+}
+
+export function narrowCondition(
+  analysis: FlowAnalysis,
+  test: ts.Expression,
+  truth: boolean,
+  original: State,
+): State {
+  return narrow(analysis, test, truth, new Map(original));
 }

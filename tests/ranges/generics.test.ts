@@ -2,6 +2,23 @@ import { lintSource } from '../support/lint.util.js';
 import { dedent } from '../support/source.util.js';
 
 describe('Generic range aliases', () => {
+  it('keeps each substituted bound separate when the same alias is used repeatedly', async () => {
+    const code = dedent(`
+      type Positive<Max extends number> = Between<0, Max>;
+
+      const narrow: Positive<5> = 6;
+      const wide: Positive<10> = 6;
+      const narrowAgain: Positive<5> = 6;
+    `);
+
+    const messages = await lintSource(code);
+
+    expect(messages).toMatchObject([
+      { messageId: 'outOfRange', line: 3 },
+      { messageId: 'outOfRange', line: 5 },
+    ]);
+  });
+
   it('substitutes a supplied generic upper bound', async () => {
     const code = dedent(`
       type Positive<Max extends number> = Between<0, Max>;

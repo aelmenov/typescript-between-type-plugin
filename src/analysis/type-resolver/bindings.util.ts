@@ -7,9 +7,11 @@ export function bindTypeParameters(
   args: readonly ts.TypeNode[] | undefined,
   outer: Environment,
 ): Environment {
+  if (!parameters?.length) return outer;
+
   const env = new Map(outer);
 
-  parameters?.forEach((parameter, index) => {
+  parameters.forEach((parameter, index) => {
     const argument = args?.[index];
     const fallback = parameter.default ?? parameter.constraint;
     let binding: Binding = unknown;

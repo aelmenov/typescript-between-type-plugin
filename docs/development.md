@@ -63,9 +63,10 @@ states and follow the configured `unknownValues` policy.
 ## Verification
 
 The tool configurations are `eslint.config.ts`, `jest.config.ts`, and
-`prettier.config.ts`. `npm run config:typecheck` checks their types. ESLint loads
-its config through Jiti; Jest uses esbuild-register; the formatting commands load
-Prettier through tsx. These loaders support the package's Node.js 20 baseline.
+`prettier.config.ts`. `npm run config:typecheck` checks their types and the benchmark
+script. ESLint loads its config through Jiti; Jest uses esbuild-register; the
+formatting commands load Prettier through tsx. These loaders support the package's
+Node.js 20 baseline.
 
 ESLint uses [Airbnb Extended](https://github.com/eslint-config/airbnb-extended)
 with TypeScript rules. Its published peer range requires ESLint 9, which is used

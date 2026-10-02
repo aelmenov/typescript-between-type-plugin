@@ -2,6 +2,34 @@ import { lintSource } from '../support/lint.util.js';
 import { dedent } from '../support/source.util.js';
 
 describe('Local aliases and range unions', () => {
+  it('covers a continuous source range with unsorted union members that share endpoints', async () => {
+    const code = dedent(`
+      type Allowed = Between<3, 5> | Between<0, 3>;
+
+      function accept(input: Between<0, 5>): Allowed {
+        return input;
+      }
+    `);
+
+    const messages = await lintSource(code);
+
+    expect(messages).toEqual([]);
+  });
+
+  it('keeps a fractional gap between otherwise adjacent union members', async () => {
+    const code = dedent(`
+      type Allowed = Between<3, 5> | Between<0, 2>;
+
+      function accept(input: Between<0, 5>): Allowed {
+        return input;
+      }
+    `);
+
+    const messages = await lintSource(code);
+
+    expect(messages).toMatchObject([{ messageId: 'possibleOutOfRange' }]);
+  });
+
   it('accepts a numeric type alias as a range bound', async () => {
     const code = dedent(`
       type End = 255;

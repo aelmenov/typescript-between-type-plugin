@@ -12,6 +12,7 @@
     "test:run": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "test:typecheck": "tsc -p tsconfig.tests.json",
     "config:typecheck": "tsc -p tsconfig.configs.json",
+    "benchmark": "npm run compile && node --import tsx scripts/benchmark.ts",
     "check": "npm run compile && npm run format:check && npm run lint && npm run config:typecheck && npm run test:typecheck && npm run test:run",
     "build": "npm run check",
     "prepack": "npm run build",

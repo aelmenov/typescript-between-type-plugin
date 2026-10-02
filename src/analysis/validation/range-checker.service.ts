@@ -1,13 +1,20 @@
 import ts from 'typescript';
-import { formatRanges } from '../../ranges/range.util.js';
-import { covered, number } from '../domain/domain.util.js';
+import { formatRanges, intersectingRange, mergeRanges } from '../../ranges/range.util.js';
+import { number } from '../domain/domain.util.js';
 import { isFunctionImplementation, propertyName } from '../syntax.util.js';
 import type { Shape } from '../domain/domain.types.js';
 import type { AnalyzeFunction } from '../analyzer/analyzer.types.js';
 import type { TypeResolver } from '../type-resolver/type-resolver.service.js';
 import type { Diagnostics } from './diagnostics.service.js';
+import type { Range } from '../../ranges/range.types.js';
 
 export class RangeChecker {
+  private readonly mergedRanges = new WeakMap<Range[], Range[]>();
+  private readonly objectProperties = new WeakMap<
+    ts.ObjectLiteralExpression,
+    Map<string, ts.ObjectLiteralElementLike>
+  >();
+
   constructor(
     private readonly types: TypeResolver,
     private readonly diagnostics: Diagnostics,
@@ -50,9 +57,8 @@ export class RangeChecker {
 
       const singleton =
         value.ranges.length === 1 && value.ranges[0]?.[0] === value.ranges[0]?.[1] && !value.nan;
-      const entirelyOutside = value.ranges.every(([a, b]) =>
-        target.ranges.every(([c, d]) => b < c || a > d),
-      );
+      const coverage = this.coverage(target.ranges);
+      const entirelyOutside = value.ranges.every((range) => !intersectingRange(coverage, range));
       let display = 'NaN';
 
       if (singleton) display = String(value.ranges[0]?.[0]);
@@ -92,10 +98,10 @@ export class RangeChecker {
         return;
       }
 
+      const properties = ts.isObjectLiteralExpression(node) ? this.properties(node) : undefined;
+
       for (const [name, property] of target.properties) {
-        const child = ts.isObjectLiteralExpression(node)
-          ? node.properties.find((p) => p.name && propertyName(p.name) === name)
-          : undefined;
+        const child = properties?.get(name);
         const location = child && ts.isPropertyAssignment(child) ? child.initializer : node;
 
         this.check(
@@ -143,12 +149,55 @@ export class RangeChecker {
     if (target.kind === 'other') return value.kind === 'other' && value.tag === target.tag;
     if (!this.constrained(target)) return true;
     if (target.kind === 'number' && value.kind === 'number')
-      return !value.nan && value.ranges.every((range) => covered(range, target.ranges));
+      return !value.nan && this.covers(target.ranges, value.ranges);
     if (target.kind === 'union')
       return target.members.some(
         (member) => member.kind !== 'unknown' && this.acceptable(member, value),
       );
 
     return false;
+  }
+
+  private covers(target: Range[], source: Range[]): boolean {
+    const ranges = this.coverage(target);
+
+    for (const range of source) {
+      const intersection = intersectingRange(ranges, range);
+
+      if (!intersection || intersection[0] > range[0] || intersection[1] < range[1]) return false;
+    }
+
+    return true;
+  }
+
+  private coverage(target: Range[]): Range[] {
+    let ranges = this.mergedRanges.get(target);
+
+    if (!ranges) {
+      ranges = mergeRanges(target);
+      this.mergedRanges.set(target, ranges);
+    }
+
+    return ranges;
+  }
+
+  private properties(node: ts.ObjectLiteralExpression): Map<string, ts.ObjectLiteralElementLike> {
+    let properties = this.objectProperties.get(node);
+
+    if (!properties) {
+      properties = new Map();
+
+      for (const property of node.properties) {
+        if (!property.name) continue;
+
+        const name = propertyName(property.name);
+
+        if (!properties.has(name)) properties.set(name, property);
+      }
+
+      this.objectProperties.set(node, properties);
+    }
+
+    return properties;
   }
 }

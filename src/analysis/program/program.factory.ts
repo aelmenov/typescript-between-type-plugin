@@ -11,10 +11,11 @@ export function createAnalysisProgram(text: string, filename: string): AnalysisP
   if (config) {
     const read = ts.readConfigFile(config, ts.sys.readFile);
 
+    // Only options are needed; discovering project files would scan unrelated directories.
     if (!read.error)
       options = ts.parseJsonConfigFileContent(
         read.config,
-        ts.sys,
+        { ...ts.sys, readDirectory: () => [] },
         config.slice(0, config.lastIndexOf('/')),
       ).options;
   }

@@ -12,4 +12,4 @@ export type Shape =
 
 export type Binding = { node: ts.TypeNode; env: Environment } | Shape;
 
-export type Environment = Map<string, Binding>;
+export type Environment = ReadonlyMap<string, Binding>;

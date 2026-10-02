@@ -2,8 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
+    "types": ["node"],
     "declaration": false,
     "noEmit": true
   },
-  "include": ["*.config.ts"]
+  "include": ["*.config.ts", "scripts/**/*.ts"]
 }

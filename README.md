@@ -42,6 +42,8 @@ The compiler uses strict typing and checks indexed access. `npm run format` form
 source, tests, configuration, and documentation; `npm run format:check` verifies them.
 The ESLint, Jest, and Prettier configurations use TypeScript. Development linting
 uses Airbnb Extended with TypeScript rules; Prettier handles the shared format.
+`npm run benchmark` measures analysis on generated workloads. See
+[analysis performance](docs/performance.md) for the measurements and cache boundaries.
 Analysis separates statement traversal, expression evaluation, type resolution,
 range checking, and diagnostics. Source is grouped into `analysis/`, `ranges/`,
 and `rules/`; analysis subdirectories keep related implementations and contracts

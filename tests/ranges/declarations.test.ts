@@ -2,6 +2,43 @@ import { lintSource } from '../support/lint.util.js';
 import { dedent } from '../support/source.util.js';
 
 describe('Invalid range declarations', () => {
+  it('keeps recursion diagnostics for generic aliases that reuse the same body', async () => {
+    const code = dedent(`
+      type Identity<Value> = Value;
+      type Inner = Identity<Byte>;
+      type Outer = Identity<Inner>;
+
+      const value: Outer = 256;
+    `);
+
+    const messages = await lintSource(code);
+
+    expect(messages).toMatchObject([
+      {
+        messageId: 'invalidRange',
+        message: 'Invalid range declaration: Cyclic or excessively deep range type.',
+      },
+    ]);
+  });
+
+  it('keeps the depth limit when previously resolved aliases form a longer chain', async () => {
+    const aliases = Array.from(
+      { length: 105 },
+      (_, index) => `type Range${index + 1} = Range${index};`,
+    );
+    const code = ['type Range0 = Byte;', ...aliases, 'const value: Range105 = 5;'].join('\n');
+
+    const messages = await lintSource(code);
+
+    expect(messages.length).toBeGreaterThan(0);
+    for (const message of messages) {
+      expect(message).toMatchObject({
+        messageId: 'invalidRange',
+        message: 'Invalid range declaration: Cyclic or excessively deep range type.',
+      });
+    }
+  });
+
   it('reports cyclic aliases without failing with recursive resolution', async () => {
     const code = dedent(`
       type First = Second;

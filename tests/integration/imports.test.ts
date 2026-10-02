@@ -180,6 +180,55 @@ describe('Range contracts imported from a consumer project', () => {
     expect(messages).toMatchObject([{ messageId: 'invalidRange' }]);
   });
 
+  it('reports an invalid imported alias at every separate use', async () => {
+    const code = dedent(`
+      import type { Broken } from './barrel.js';
+
+      const first: Broken = 1;
+      const second: Broken = 2;
+    `);
+
+    const messages = await lintSource(code, linter, filename);
+
+    expect(messages).toMatchObject([
+      { messageId: 'invalidRange', line: 3 },
+      { messageId: 'invalidRange', line: 4 },
+    ]);
+  });
+
+  it('reads updated path aliases when linting again with the same ESLint instance', async () => {
+    const code = dedent(`
+      import type { Channel } from '@ranges/ranges';
+
+      const channel: Channel = 300;
+    `);
+
+    await writeProjectFile(
+      directory,
+      'alternate/ranges.ts',
+      'export type Channel = Between<0, 500>;',
+    );
+
+    const before = await lintSource(code, linter, filename);
+
+    await writeProjectFile(
+      directory,
+      'tsconfig.json',
+      JSON.stringify({
+        compilerOptions: {
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          paths: { '@ranges/*': ['./alternate/*'] },
+        },
+      }),
+    );
+
+    const after = await lintSource(code, linter, filename);
+
+    expect(before).toMatchObject([{ messageId: 'outOfRange' }]);
+    expect(after).toEqual([]);
+  });
+
   it('reads an updated imported range when linting again with the same ESLint instance', async () => {
     const code = dedent(`
       import type { Channel } from './types/ranges.js';
