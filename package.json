@@ -63,7 +63,8 @@
     "build": "npm run compile",
     "prepack": "npm run check",
     "format": "node --import tsx node_modules/prettier/bin/prettier.cjs --write .",
-    "format:check": "node --import tsx node_modules/prettier/bin/prettier.cjs --check ."
+    "format:check": "node --import tsx node_modules/prettier/bin/prettier.cjs --check .",
+    "version": "node --import tsx scripts/version.ts"
   },
   "peerDependencies": {
     "eslint": "^9.0.0 || ^10.0.0",

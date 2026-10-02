@@ -63,8 +63,7 @@ states and follow the configured `unknownValues` policy.
 ## Verification
 
 The tool configurations are `eslint.config.ts`, `jest.config.ts`, and
-`prettier.config.ts`. `npm run config:typecheck` checks their types and the benchmark
-script. ESLint loads its config through Jiti; Jest uses esbuild-register; the
+`prettier.config.ts`. `npm run config:typecheck` checks their types and the scripts. ESLint loads its config through Jiti; Jest uses esbuild-register; the
 formatting commands load Prettier through tsx. These loaders support the package's
 Node.js 20 baseline.
 

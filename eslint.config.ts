@@ -58,6 +58,12 @@ export default defineConfig(
     languageOptions: { globals: globals.jest },
   },
   {
+    files: ['scripts/**/*.ts'],
+    rules: {
+      'import-x/no-extraneous-dependencies': ['error', { devDependencies: true }],
+    },
+  },
+  {
     files: ['lib.between.d.ts'],
     languageOptions: { parserOptions: { project: null } },
     ...tseslint.configs.disableTypeChecked,

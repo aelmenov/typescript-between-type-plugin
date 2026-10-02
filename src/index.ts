@@ -1,10 +1,11 @@
 import type { TSESLint } from '@typescript-eslint/utils';
+import { pluginMeta } from './plugin.constants.js';
 import withinRange from './rules/within-range.js';
 
 const configs: Record<string, TSESLint.FlatConfig.Config> = {};
 
 const plugin = {
-  meta: { name: '@elmenov-softworks/eslint-plugin-between', version: '1.0.0' },
+  meta: pluginMeta,
   rules: { 'within-range': withinRange },
   configs,
 };

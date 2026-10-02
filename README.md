@@ -80,6 +80,7 @@ Node.js `^20.19.0 || ^22.13.0 || >=24.0.0`. The package exports ESM JavaScript.
 - [Rule options and limitations](docs/within-range.md)
 - [Range behavior](docs/range-behavior.md) and [numeric aliases](docs/numeric-aliases.md)
 - [Development](docs/development.md), [tests](docs/testing.md), and [performance](docs/performance.md)
+- [CI and npm releases](docs/releases.md)
 
 For development: `npm ci`, `npm run build`, and `npm run check`.
 `npm pack` creates a checked, installable archive.

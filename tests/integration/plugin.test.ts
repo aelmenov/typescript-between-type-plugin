@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import parser from '@typescript-eslint/parser';
 import { TSESLint } from '@typescript-eslint/utils';
 import plugin from '@elmenov-softworks/eslint-plugin-between';
@@ -5,6 +6,13 @@ import { createLinter, lintSource } from '../support/lint.util.js';
 import { dedent } from '../support/source.util.js';
 
 describe('Published plugin and recommended flat configuration', () => {
+  it('exposes the published package name and version in ESLint metadata', async () => {
+    const text = await readFile(new URL('../../package.json', import.meta.url), 'utf8');
+    const manifest: unknown = JSON.parse(text);
+
+    expect(manifest).toMatchObject(plugin.meta);
+  });
+
   it('enables the rule as an ESLint error', async () => {
     const linter = createLinter();
     const code = 'const channel: Between<1, 10> = 0;';
